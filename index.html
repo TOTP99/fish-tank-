@@ -80,8 +80,15 @@ button.gold{
 <script>
 "use strict";
 const canvas = document.getElementById("tank");
-const ctx = canvas.getContext("2d");
+/* opaque canvas → cheaper compositor path on most browsers */
+const ctx = canvas.getContext("2d", { alpha: false });
 let W = 0, H = 0, DPR = 1;
+
+/* Offscreen layer for static floor / rocks / platform.
+   Rebuilt only on resize or day↔night toggle — not every frame. */
+const staticCanvas = document.createElement("canvas");
+const staticCtx = staticCanvas.getContext("2d");
+let staticDirty = true;
 
 function resize() {
   const rect = canvas.parentElement.getBoundingClientRect();
@@ -89,6 +96,10 @@ function resize() {
   W = rect.width; H = rect.height;
   canvas.width = W * DPR; canvas.height = H * DPR;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  staticCanvas.width = W * DPR;
+  staticCanvas.height = H * DPR;
+  staticCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  staticDirty = true;
 }
 window.addEventListener("resize", resize);
 resize();
@@ -124,23 +135,19 @@ function drawWater() {
   ctx.fillStyle = isNight ? "#020409" : "#dff3f7";
   ctx.fillRect(0, 0, W, sy);
 
-  // light rays
+  // light rays — solid fill (avoids 5× createLinearGradient per frame)
   ctx.save();
   ctx.beginPath();
   ctx.rect(0, sy, W, fy - sy);
   ctx.clip();
-  const rayAlpha = isNight ? 0.03 : 0.10;
+  ctx.fillStyle = isNight ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.09)";
   for (let i = 0; i < 5; i++) {
     const bx = (i / 5) * W + Math.sin(t * 0.15 + i) * 18;
-    const grad = ctx.createLinearGradient(bx, sy, bx + 60, fy);
-    grad.addColorStop(0, `rgba(255,255,255,${rayAlpha})`);
-    grad.addColorStop(1, "rgba(255,255,255,0)");
-    ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.moveTo(bx - 20, sy);
-    ctx.lineTo(bx + 20, sy);
-    ctx.lineTo(bx + 70, fy);
-    ctx.lineTo(bx + 10, fy);
+    ctx.moveTo(bx - 18, sy);
+    ctx.lineTo(bx + 18, sy);
+    ctx.lineTo(bx + 55, fy);
+    ctx.lineTo(bx + 8, fy);
     ctx.closePath();
     ctx.fill();
   }
@@ -175,21 +182,53 @@ function drawWater() {
 
 /* ---------------- substrate + decorations ---------------- */
 const gravelSeed = Array.from({ length: 220 }, () => ({ x: Math.random(), c: Math.random() }));
-function drawFloor() {
+
+/** Pre-render gravel + rocks + platform once (or on day/night / resize). */
+function rebuildStaticLayer() {
+  const c = staticCtx;
+  c.clearRect(0, 0, W, H);
   const fy = floorY();
-  ctx.fillStyle = isNight ? "#1b140d" : "#7a5a36";
-  ctx.fillRect(0, fy, W, H - fy);
+
+  c.fillStyle = isNight ? "#1b140d" : "#7a5a36";
+  c.fillRect(0, fy, W, H - fy);
+
   for (const g of gravelSeed) {
     const gx = g.x * W;
     const gy = fy + 4 + (g.c * (H - fy - 8));
     const shade = 0.5 + Math.sin(g.c * 40) * 0.2;
-    ctx.fillStyle = isNight
+    c.fillStyle = isNight
       ? `rgba(${60 + shade * 40},${45 + shade * 30},${30 + shade * 20},.9)`
       : `rgba(${150 + shade * 80},${110 + shade * 60},${60 + shade * 40},.9)`;
-    ctx.beginPath();
-    ctx.ellipse(gx, gy, 2 + shade * 2, 1.4 + shade, 0, 0, Math.PI * 2);
-    ctx.fill();
+    c.beginPath();
+    c.ellipse(gx, gy, 2 + shade * 2, 1.4 + shade, 0, 0, Math.PI * 2);
+    c.fill();
   }
+
+  function rock(x, y, s) {
+    c.fillStyle = isNight ? "#2c2c30" : "#6b6b6f";
+    c.beginPath();
+    c.ellipse(x, y, s, s * 0.6, 0, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = isNight ? "#3a3a40" : "#87878c";
+    c.beginPath();
+    c.ellipse(x - s * 0.2, y - s * 0.3, s * 0.5, s * 0.3, 0, 0, Math.PI * 2);
+    c.fill();
+  }
+  rock(W * 0.18, fy + 6, 16);
+  rock(W * 0.22, fy + 10, 9);
+
+  // basking platform (floating driftwood)
+  const px = W * 0.84, py = surfaceY() - 2;
+  c.fillStyle = "#4a3018";
+  c.beginPath();
+  c.ellipse(px, py, 34, 8, 0, 0, Math.PI * 2);
+  c.fill();
+  c.fillStyle = "#5c3d20";
+  c.beginPath();
+  c.ellipse(px - 6, py - 3, 22, 5, 0, 0, Math.PI * 2);
+  c.fill();
+
+  staticDirty = false;
 }
 
 function drawPlant(x, baseY, h, hueA, sway) {
@@ -208,41 +247,20 @@ function drawPlant(x, baseY, h, hueA, sway) {
   }
 }
 
-function drawRock(x, y, s) {
-  ctx.fillStyle = isNight ? "#2c2c30" : "#6b6b6f";
-  ctx.beginPath();
-  ctx.ellipse(x, y, s, s * 0.6, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = isNight ? "#3a3a40" : "#87878c";
-  ctx.beginPath();
-  ctx.ellipse(x - s * 0.2, y - s * 0.3, s * 0.5, s * 0.3, 0, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-function drawDecor() {
+/** Plants stay per-frame because of sway animation. */
+function drawPlants() {
   const fy = floorY();
-  drawRock(W * 0.18, fy + 6, 16);
-  drawRock(W * 0.22, fy + 10, 9);
   drawPlant(W * 0.78, fy + 4, H * 0.34, isNight ? "#1f5c3a" : "#2e9c56", 0);
   drawPlant(W * 0.86, fy + 6, H * 0.24, isNight ? "#164a2e" : "#238049", 1.4);
   drawPlant(W * 0.10, fy + 2, H * 0.20, isNight ? "#1f5c3a" : "#2e9c56", 2.1);
-
-  // basking platform (floating driftwood, top-right, half in/out of water)
-  const px = W * 0.84, py = surfaceY() - 2;
-  ctx.fillStyle = "#4a3018";
-  ctx.beginPath();
-  ctx.ellipse(px, py, 34, 8, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = "#5c3d20";
-  ctx.beginPath();
-  ctx.ellipse(px - 6, py - 3, 22, 5, 0, 0, Math.PI * 2);
-  ctx.fill();
 }
 
 /* ---------------- air stone + bubbles ---------------- */
+const MAX_BUBBLES = 40;
 let bubbles = [];
 const airStoneX = () => W * 0.5;
 function spawnBubble() {
+  if (bubbles.length >= MAX_BUBBLES) return;
   bubbles.push({
     x: airStoneX() + rand(-4, 4),
     y: floorY() - 2,
@@ -252,17 +270,22 @@ function spawnBubble() {
   });
 }
 function updateBubbles(dt) {
-  if (Math.random() < 0.35) spawnBubble();
+  if (Math.random() < 0.28) spawnBubble();
   const sy = surfaceY();
-  bubbles = bubbles.filter(b => b.y > sy);
-  for (const b of bubbles) {
+  // in-place filter — avoids allocating a new array every frame
+  let w = 0;
+  for (let i = 0; i < bubbles.length; i++) {
+    const b = bubbles[i];
     b.y -= b.vy * dt;
     b.x += Math.sin(b.y * 0.05) * b.drift * dt;
+    if (b.y > sy) bubbles[w++] = b;
   }
+  bubbles.length = w;
 }
 function drawBubbles() {
   ctx.fillStyle = isNight ? "rgba(200,230,255,.35)" : "rgba(255,255,255,.55)";
-  for (const b of bubbles) {
+  for (let i = 0; i < bubbles.length; i++) {
+    const b = bubbles[i];
     ctx.beginPath();
     ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
     ctx.fill();
@@ -276,14 +299,19 @@ function dropFood(x, y) {
 }
 function updateFood(dt) {
   const fy = floorY();
-  for (const f of foods) {
+  let w = 0;
+  for (let i = 0; i < foods.length; i++) {
+    const f = foods[i];
+    if (f.eaten) continue;
     if (f.y < fy - 6) f.y += f.vy * dt;
+    foods[w++] = f;
   }
-  foods = foods.filter(f => !f.eaten);
+  foods.length = w;
 }
 function drawFood() {
   ctx.fillStyle = "#c98a3b";
-  for (const f of foods) {
+  for (let i = 0; i < foods.length; i++) {
+    const f = foods[i];
     ctx.beginPath();
     ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
     ctx.fill();
@@ -302,6 +330,7 @@ class Goldfish {
     this.size = rand(0.85, 1.15);
     this.retarget = 0;
     this.tx = this.x; this.ty = this.y;
+    this.fleeing = false;
   }
   pickTarget() {
     const margin = 40;
@@ -309,29 +338,58 @@ class Goldfish {
     this.ty = rand(surfaceY() + 24, floorY() - 14);
     this.retarget = rand(2.5, 5);
   }
+  /** Steer away from turtle when it is close or charging food. */
+  fleeFromTurtle() {
+    if (!turtle) return false;
+    const d = Math.hypot(turtle.x - this.x, turtle.y - this.y);
+    // scare radius larger when turtle is actively hunting
+    const scareR = turtle.chasingFood || turtle.eatTimer > 0 ? 95 : 55;
+    if (d > scareR) return false;
+    // run opposite direction, a bit upward if possible
+    const ang = Math.atan2(this.y - turtle.y, this.x - turtle.x);
+    this.tx = clamp(this.x + Math.cos(ang) * 80, 30, W - 30);
+    this.ty = clamp(this.y + Math.sin(ang) * 60 - 10, surfaceY() + 20, floorY() - 14);
+    this.fleeing = true;
+    this.retarget = 0.8;
+    return true;
+  }
   update(dt) {
     this.retarget -= dt;
-    // chase nearest un-eaten food if any
-    let target = null, best = Infinity;
-    for (const f of foods) {
-      if (f.eaten) continue;
-      const d = Math.hypot(f.x - this.x, f.y - this.y);
-      if (d < best) { best = d; target = f; }
+    this.fleeing = false;
+
+    // 1) Turtle nearby → panic and yield the food
+    if (this.fleeFromTurtle()) {
+      // do not contest food while fleeing
+    } else {
+      // 2) Only chase food if turtle is far from that pellet (turtle wins disputes)
+      let target = null, best = Infinity;
+      for (const f of foods) {
+        if (f.eaten) continue;
+        // if turtle is already closing in on this pellet, leave it alone
+        if (turtle) {
+          const td = Math.hypot(f.x - turtle.x, f.y - turtle.y);
+          if (td < 70) continue;
+        }
+        const d = Math.hypot(f.x - this.x, f.y - this.y);
+        if (d < best) { best = d; target = f; }
+      }
+      if (target) {
+        this.tx = target.x; this.ty = target.y;
+        if (best < 8) { target.eaten = true; }
+      } else if (this.retarget <= 0) {
+        this.pickTarget();
+      }
     }
-    if (target) {
-      this.tx = target.x; this.ty = target.y;
-      if (best < 8) { target.eaten = true; }
-    } else if (this.retarget <= 0) {
-      this.pickTarget();
-    }
+
     const dx = this.tx - this.x, dy = this.ty - this.y;
     const dist = Math.hypot(dx, dy) || 1;
     const wantDir = Math.atan2(dy, dx);
     let diff = wantDir - this.dir;
     while (diff > Math.PI) diff -= Math.PI * 2;
     while (diff < -Math.PI) diff += Math.PI * 2;
-    this.dir += diff * Math.min(1, dt * 2.2);
-    const speed = target ? this.speed * 1.3 : this.speed;
+    this.dir += diff * Math.min(1, dt * (this.fleeing ? 4.5 : 2.2));
+    const speed = this.fleeing ? this.speed * 1.85
+      : (foods.some(f => !f.eaten) ? this.speed * 1.15 : this.speed);
     const step = Math.min(speed * dt, dist);
     this.x += Math.cos(this.dir) * step;
     this.y += Math.sin(this.dir) * step;
@@ -345,7 +403,6 @@ class Goldfish {
     ctx.translate(this.x, this.y);
     const flip = Math.cos(this.dir) < 0;
     ctx.scale(flip ? -1 : 1, 1);
-    const facing = flip ? Math.PI - this.dir : this.dir;
     ctx.rotate(Math.sin(this.wiggle) * 0.06);
 
     const bodyGrad = ctx.createLinearGradient(-s, 0, s, 0);
@@ -391,16 +448,12 @@ class Goldfish {
     // telescope (bug) eyes — the signature feature
     for (const side of [-1, 1]) {
       const ex = s * 0.55, ey = side * s * 0.32;
-      // eye stalk shadow
       ctx.fillStyle = "rgba(0,0,0,.12)";
       ctx.beginPath(); ctx.ellipse(ex + 1, ey + 1, s * 0.24, s * 0.24, 0, 0, Math.PI * 2); ctx.fill();
-      // bulging white sclera
       ctx.fillStyle = "#fff8ec";
       ctx.beginPath(); ctx.arc(ex, ey, s * 0.24, 0, Math.PI * 2); ctx.fill();
-      // black pupil
       ctx.fillStyle = "#191410";
       ctx.beginPath(); ctx.arc(ex + s * 0.05, ey, s * 0.13, 0, Math.PI * 2); ctx.fill();
-      // glint
       ctx.fillStyle = "rgba(255,255,255,.85)";
       ctx.beginPath(); ctx.arc(ex + s * 0.02, ey - s * 0.06, s * 0.045, 0, Math.PI * 2); ctx.fill();
     }
@@ -422,52 +475,116 @@ class Turtle {
   constructor() {
     this.x = W * 0.3; this.y = floorY() - 20;
     this.dir = 0;
-    this.speed = 20;
+    this.speed = 24;
     this.legPhase = 0;
     this.state = "swim"; // swim | toSurface | surfaced | diving
     this.stateTimer = rand(6, 12);
     this.tx = this.x; this.ty = this.y;
+    // feeding / digestion
+    this.chasingFood = false;
+    this.eatTimer = 0;      // chewing animation countdown
+    this.belly = 0;         // 0..1 fullness
+    this.digestTimer = 0;   // time left to finish current meal
+    this.meals = 0;         // how many pellets in this sitting
     this.pickTarget();
   }
   pickTarget() {
     const margin = 34;
     this.tx = rand(margin, W - margin);
-    this.ty = rand(floorY() - 60, floorY() - 12);
+    // prefer bottom third — red-eared sliders forage near the substrate
+    this.ty = rand(floorY() - 50, floorY() - 10);
+  }
+  /** Nearest uneaten food, or null. */
+  findFood() {
+    let best = null, bestD = Infinity;
+    for (let i = 0; i < foods.length; i++) {
+      const f = foods[i];
+      if (f.eaten) continue;
+      const d = Math.hypot(f.x - this.x, f.y - this.y);
+      if (d < bestD) { bestD = d; best = f; }
+    }
+    return best ? { food: best, dist: bestD } : null;
+  }
+  /** Swallow one pellet → start chew + fill belly. */
+  eat(food) {
+    food.eaten = true;
+    this.eatTimer = 0.55;          // chew duration
+    this.meals += 1;
+    this.belly = Math.min(1, this.belly + 0.28);
+    this.digestTimer = Math.max(this.digestTimer, 8 + this.meals * 3);
+    playBlip(220);                 // low gulp sound
   }
   update(dt) {
     this.stateTimer -= dt;
-    // Compete for food like the goldfish do, but only while calmly cruising
-    // (not mid-surface-trip) — the turtle is slower, so it won't always win,
-    // but it will now actually go for it instead of ignoring food entirely.
-    let chasingFood = null;
-    if (this.state === "swim") {
-      let best = Infinity;
-      for (const f of foods) {
-        if (f.eaten) continue;
-        const d = Math.hypot(f.x - this.x, f.y - this.y);
-        if (d < best) { best = d; chasingFood = f; }
-      }
-      if (chasingFood) {
-        this.tx = chasingFood.x; this.ty = chasingFood.y;
-        if (best < 15) { chasingFood.eaten = true; chasingFood = null; }
+    if (this.eatTimer > 0) this.eatTimer -= dt;
+
+    // Digestion: fullness slowly drops after meals settle
+    if (this.digestTimer > 0) {
+      this.digestTimer -= dt;
+      if (this.digestTimer <= 0) {
+        this.belly = Math.max(0, this.belly - 0.2);
+        this.meals = Math.max(0, this.meals - 1);
+        if (this.belly > 0.05) this.digestTimer = 5; // continue digesting leftover
+        else { this.belly = 0; this.meals = 0; }
       }
     }
-    if (!chasingFood && this.state === "swim") {
+
+    // Full turtle prefers basking / resting over hunting
+    const isFull = this.belly > 0.75;
+    const isHungry = this.belly < 0.35;
+
+    // Food has high priority when hungry / not completely full
+    const found = (!isFull || this.belly < 0.95) ? this.findFood() : null;
+    this.chasingFood = false;
+    if (found && this.state !== "surfaced" && this.eatTimer <= 0) {
+      if (this.state === "toSurface" || this.state === "diving") {
+        this.state = "swim";
+        this.stateTimer = rand(3, 6);
+      }
+      this.chasingFood = true;
+      this.tx = found.food.x;
+      this.ty = found.food.y;
+      // aggressive snap radius
+      if (found.dist < 26) {
+        this.eat(found.food);
+        this.chasingFood = false;
+      }
+    }
+
+    if (!this.chasingFood && this.state === "swim") {
       const dx = this.tx - this.x, dy = this.ty - this.y;
       const dist = Math.hypot(dx, dy) || 1;
       if (dist < 12 || this.stateTimer <= 0) {
-        if (Math.random() < 0.3) { this.state = "toSurface"; this.stateTimer = 20; }
-        else { this.pickTarget(); this.stateTimer = rand(6, 12); }
+        // full → more likely to bask; hungry → stay foraging
+        const baskChance = isFull ? 0.45 : (isHungry ? 0.08 : 0.16);
+        if (Math.random() < baskChance) {
+          this.state = "toSurface";
+          this.stateTimer = 20;
+        } else {
+          this.pickTarget();
+          this.stateTimer = rand(4, 9);
+        }
       }
     } else if (this.state === "toSurface") {
       const px = W * 0.84, py = surfaceY() - 6;
       this.tx = px; this.ty = py;
-      if (Math.hypot(px - this.x, py - this.y) < 10) { this.state = "surfaced"; this.stateTimer = rand(4, 8); }
+      if (Math.hypot(px - this.x, py - this.y) < 10) {
+        this.state = "surfaced";
+        // digest longer on the platform when full
+        this.stateTimer = isFull ? rand(7, 12) : rand(4, 8);
+      }
     } else if (this.state === "surfaced") {
       this.tx = this.x; this.ty = this.y;
-      if (this.stateTimer <= 0) { this.state = "diving"; this.pickTarget(); this.stateTimer = 8; }
+      if (this.stateTimer <= 0) {
+        this.state = "diving";
+        this.pickTarget();
+        this.stateTimer = 8;
+      }
     } else if (this.state === "diving") {
-      if (Math.hypot(this.tx - this.x, this.ty - this.y) < 12) { this.state = "swim"; this.stateTimer = rand(6, 12); }
+      if (Math.hypot(this.tx - this.x, this.ty - this.y) < 12) {
+        this.state = "swim";
+        this.stateTimer = rand(4, 9);
+      }
     }
 
     if (this.state !== "surfaced") {
@@ -477,71 +594,156 @@ class Turtle {
       let diff = wantDir - this.dir;
       while (diff > Math.PI) diff -= Math.PI * 2;
       while (diff < -Math.PI) diff += Math.PI * 2;
-      this.dir += diff * Math.min(1, dt * 1.6);
-      const speed = chasingFood ? this.speed * 1.4 : this.speed;
+      // charge hard at food; sluggish when digesting
+      const turnRate = this.chasingFood ? 3.4 : (isFull ? 1.1 : 1.6);
+      this.dir += diff * Math.min(1, dt * turnRate);
+      let speedMul = 1;
+      if (this.chasingFood) speedMul = 2.6;       // dash
+      else if (this.eatTimer > 0) speedMul = 0.35; // pause to chew
+      else if (isFull) speedMul = 0.55;           // heavy after meals
+      const speed = this.speed * speedMul;
       const step = Math.min(speed * dt, dist);
       this.x += Math.cos(this.dir) * step;
       this.y += Math.sin(this.dir) * step;
-      this.legPhase += dt * (chasingFood ? 7 : 5);
+      this.legPhase += dt * (this.chasingFood ? 11 : (isFull ? 3 : 5));
     } else {
-      this.legPhase += dt * 1.2;
+      this.legPhase += dt * 1.0;
     }
     this.x = clamp(this.x, 26, W - 26);
     this.y = clamp(this.y, surfaceY() + 10, floorY() - 8);
   }
   draw() {
-    const s = 22;
+    // slight bulk when full (digesting)
+    const bulk = 1 + this.belly * 0.12;
+    const s = 24 * bulk;
     ctx.save();
     ctx.translate(this.x, this.y);
     const flip = Math.cos(this.dir) < 0;
     ctx.scale(flip ? -1 : 1, 1);
 
-    // legs (paddles), behind shell
-    ctx.fillStyle = "#2f6b3a";
+    // —— legs (webbed paddles), drawn under shell ——
+    ctx.fillStyle = "#3a6b32";
     for (let i = 0; i < 4; i++) {
       const side = i < 2 ? -1 : 1;
       const front = i % 2 === 0;
       const phase = this.legPhase + (front ? 0 : Math.PI) + (side < 0 ? 0 : Math.PI);
       const swing = Math.sin(phase) * 10;
-      const lx = (front ? s * 0.55 : -s * 0.55) + swing * 0.3;
-      const ly = side * s * 0.55 + Math.cos(phase) * 4;
+      const lx = (front ? s * 0.55 : -s * 0.5) + swing * 0.3;
+      const ly = side * s * 0.52 + Math.cos(phase) * 3.5;
       ctx.beginPath();
-      ctx.ellipse(lx, ly, 9, 4.5, side * 0.5, 0, Math.PI * 2);
+      ctx.ellipse(lx, ly, 10, 4.2, side * 0.45, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#c9b45a";
+      ctx.beginPath();
+      ctx.arc(lx + 7, ly + side * 1.5, 1.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#3a6b32";
+    }
+
+    // —— carapace ——
+    const shellGrad = ctx.createRadialGradient(-s * 0.15, -s * 0.25, 2, 0, 0, s * 1.05);
+    shellGrad.addColorStop(0, "#6b8f3e");
+    shellGrad.addColorStop(0.45, "#4a6b32");
+    shellGrad.addColorStop(1, "#2d4520");
+    ctx.fillStyle = shellGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, s, s * 0.68, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(200, 180, 90, 0.45)";
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, s * 0.92, s * 0.60, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(20, 30, 10, 0.55)";
+    ctx.lineWidth = 1.15;
+    for (let i = -1; i <= 1; i++) {
+      ctx.beginPath();
+      ctx.ellipse(i * s * 0.38, 0, s * 0.22, s * 0.42, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    for (const side of [-1, 1]) {
+      for (let i = -1; i <= 1; i++) {
+        ctx.beginPath();
+        ctx.ellipse(i * s * 0.32, side * s * 0.28, s * 0.26, s * 0.22, side * 0.15, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+    ctx.strokeStyle = "rgba(15, 25, 8, 0.35)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.7, 0);
+    ctx.lineTo(s * 0.7, 0);
+    ctx.stroke();
+
+    // —— head + neck ——
+    ctx.fillStyle = "#4a7a38";
+    ctx.beginPath();
+    ctx.ellipse(s * 0.85, -1, 7, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#3f6e32";
+    ctx.beginPath();
+    ctx.ellipse(s * 1.12, -2, 9, 6.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // yellow head stripes
+    ctx.strokeStyle = "rgba(230, 200, 70, 0.85)";
+    ctx.lineWidth = 1.3;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(s * 0.95, -6);
+    ctx.lineTo(s * 1.28, -5);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(s * 0.95, 2);
+    ctx.lineTo(s * 1.25, 3);
+    ctx.stroke();
+
+    // red ear patch
+    ctx.fillStyle = "#d4452f";
+    ctx.beginPath();
+    ctx.ellipse(s * 1.05, -7.5, 4.2, 2.4, 0.35, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#a83220";
+    ctx.beginPath();
+    ctx.ellipse(s * 1.05, -7.5, 2.2, 1.2, 0.35, 0, Math.PI * 2);
+    ctx.fill();
+
+    // eye
+    ctx.fillStyle = "#1a1e12";
+    ctx.beginPath();
+    ctx.arc(s * 1.2, -3, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.45)";
+    ctx.beginPath();
+    ctx.arc(s * 1.22, -3.5, 0.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // beak — opens while chewing
+    const jaw = this.eatTimer > 0 ? 3.2 * Math.sin((0.55 - this.eatTimer) * 14) : 0;
+    ctx.fillStyle = "#2a4020";
+    ctx.beginPath();
+    ctx.moveTo(s * 1.26, -1.2);
+    ctx.lineTo(s * 1.40, -0.2 + jaw * 0.15);
+    ctx.lineTo(s * 1.26, 1.6 + jaw);
+    ctx.closePath();
+    ctx.fill();
+    // mouth cavity when open
+    if (jaw > 1) {
+      ctx.fillStyle = "#1a1008";
+      ctx.beginPath();
+      ctx.ellipse(s * 1.30, 0.6 + jaw * 0.3, 2.2, jaw * 0.55, 0, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // shell
-    const shellGrad = ctx.createRadialGradient(-s * 0.2, -s * 0.2, 4, 0, 0, s);
-    shellGrad.addColorStop(0, "#4d8a4a");
-    shellGrad.addColorStop(1, "#2c5c33");
-    ctx.fillStyle = shellGrad;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, s, s * 0.72, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "rgba(0,0,0,.25)";
-    ctx.lineWidth = 1;
-    // scute pattern
-    for (let i = -1; i <= 1; i++) {
+    // tiny fullness indicator under shell (subtle dark belly bulge)
+    if (this.belly > 0.2) {
+      ctx.fillStyle = `rgba(40, 60, 25, ${0.25 + this.belly * 0.35})`;
       ctx.beginPath();
-      ctx.ellipse(i * s * 0.4, 0, s * 0.32, s * 0.5, 0, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.ellipse(0, s * 0.35, s * 0.55 * this.belly, s * 0.18 * this.belly, 0, 0, Math.PI * 2);
+      ctx.fill();
     }
-
-    // head + neck
-    ctx.fillStyle = "#3f7a45";
-    ctx.beginPath();
-    ctx.ellipse(s * 1.05, -2, 8, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // red ear patch
-    ctx.fillStyle = "#c1503f";
-    ctx.beginPath();
-    ctx.ellipse(s * 1.08, -7, 3.4, 2, 0.4, 0, Math.PI * 2);
-    ctx.fill();
-    // eye
-    ctx.fillStyle = "#161a12";
-    ctx.beginPath();
-    ctx.arc(s * 1.1, -3, 1.3, 0, Math.PI * 2);
-    ctx.fill();
 
     ctx.restore();
   }
@@ -584,6 +786,7 @@ function randomFeedBurst() {
 document.getElementById("btnFeed").addEventListener("click", randomFeedBurst);
 document.getElementById("btnCycle").addEventListener("click", () => {
   isNight = !isNight;
+  staticDirty = true; // gravel / rock colours depend on day-night
   playBlip(isNight ? 300 : 700);
 });
 canvas.addEventListener("click", e => {
@@ -596,6 +799,7 @@ canvas.addEventListener("click", e => {
 
 /* ---------------- main loop ---------------- */
 let last = performance.now();
+const actors = []; // reused each frame to avoid allocation
 function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
@@ -604,18 +808,24 @@ function loop(now) {
   updateBubbles(dt);
   updateFood(dt);
   turtle.update(dt);
-  for (const f of fishes) f.update(dt);
+  for (let i = 0; i < fishes.length; i++) fishes[i].update(dt);
+
+  if (staticDirty) rebuildStaticLayer();
 
   ctx.clearRect(0, 0, W, H);
   drawWater();
-  drawDecor();
-  drawFloor();
+  // blit pre-rendered static layer (gravel + rocks + platform)
+  ctx.drawImage(staticCanvas, 0, 0, W, H);
+  drawPlants(); // only dynamic décor (sway)
   drawBubbles();
   drawFood();
 
-  // depth-sort turtle + fish so whichever is "lower" on screen draws on top
-  const actors = [turtle, ...fishes].sort((a, b) => a.y - b.y);
-  for (const a of actors) a.draw();
+  // depth-sort into reused array
+  actors.length = 0;
+  actors.push(turtle);
+  for (let i = 0; i < fishes.length; i++) actors.push(fishes[i]);
+  actors.sort((a, b) => a.y - b.y);
+  for (let i = 0; i < actors.length; i++) actors[i].draw();
 
   requestAnimationFrame(loop);
 }
