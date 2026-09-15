@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#03141c">
+<title>大鱼缸 · 巴西龟与鼓眼金鱼</title>
+<style>
+:root{
+  --frame:#2b2118;
+  --frame-hi:#4a3a26;
+  --ink:#eef6f8;
+  --muted:#9fb8bd;
+  --gold:#e0b25a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0a0d10;overflow:hidden;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+body{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom);
+  min-height:100vh;
+}
+#stage{
+  position:relative;width:100%;max-width:720px;
+  aspect-ratio:4/5;
+  border-radius:18px;
+  padding:14px 14px 22px;
+  background:linear-gradient(155deg,var(--frame-hi),var(--frame) 40%,#1a130c);
+  box-shadow:0 18px 40px rgba(0,0,0,.55),inset 0 2px 0 rgba(255,255,255,.06);
+}
+#tankWrap{
+  position:relative;width:100%;height:100%;
+  border-radius:8px;overflow:hidden;
+  box-shadow:inset 0 0 0 3px rgba(255,255,255,.08),inset 0 10px 30px rgba(0,0,0,.5);
+}
+canvas{display:block;width:100%;height:100%}
+#hud{
+  position:absolute;top:8px;left:0;right:0;
+  display:flex;justify-content:space-between;align-items:flex-start;
+  padding:0 4px;pointer-events:none;
+}
+#title{
+  color:var(--gold);font-weight:800;font-size:13px;letter-spacing:.4px;
+  text-shadow:0 1px 3px rgba(0,0,0,.6);
+  background:rgba(0,0,0,.25);padding:4px 10px;border-radius:12px;
+  pointer-events:auto;
+}
+#controls{
+  position:absolute;bottom:-6px;left:0;right:0;
+  display:flex;justify-content:center;gap:10px;
+  transform:translateY(100%);padding-top:12px;
+}
+button{
+  border:1px solid rgba(255,255,255,.15);border-radius:14px;
+  padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;
+  background:linear-gradient(160deg,#2c2115,#1c150d);color:var(--ink);
+  box-shadow:0 4px 12px rgba(0,0,0,.4);
+  transition:transform .12s;
+}
+button:active{transform:scale(.94)}
+button.gold{
+  background:linear-gradient(160deg,var(--gold),#a9782f);color:#231705;
+  border-color:var(--gold);
+}
+#hint{
+  position:absolute;bottom:-46px;left:0;right:0;text-align:center;
+  font-size:11px;color:var(--muted);
+}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="tankWrap">
+    <canvas id="tank"></canvas>
+    <div id="hud"><span id="title">🐢 巴西龟の鱼缸</span></div>
+  </div>
+  <div id="controls">
+    <button id="btnFeed" class="gold">🍤 投食</button>
+    <button id="btnCycle">🌗 昼/夜</button>
+  </div>
+  <div id="hint">点一下缸里也能投食</div>
+</div>
+
+<script>
+"use strict";
+const canvas = document.getElementById("tank");
+const ctx = canvas.getContext("2d");
+let W = 0, H = 0, DPR = 1;
+
+function resize() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = rect.width; H = rect.height;
+  canvas.width = W * DPR; canvas.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+window.addEventListener("resize", resize);
+resize();
+
+/* ---------------- shared helpers ---------------- */
+const rand = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+let isNight = false;
+let t = 0; // global animation clock (seconds)
+
+/* ---------------- water surface + light rays ---------------- */
+const surfaceY = () => H * 0.10;
+const floorY = () => H * 0.90;
+
+function drawWater() {
+  const sy = surfaceY(), fy = floorY();
+  const day = ctx.createLinearGradient(0, sy, 0, fy);
+  if (isNight) {
+    day.addColorStop(0, "#0c2b3a");
+    day.addColorStop(0.5, "#082230");
+    day.addColorStop(1, "#04141d");
+  } else {
+    day.addColorStop(0, "#bdeaf5");
+    day.addColorStop(0.35, "#5fc2d9");
+    day.addColorStop(0.75, "#1f7f9e");
+    day.addColorStop(1, "#0e4f66");
+  }
+  ctx.fillStyle = day;
+  ctx.fillRect(0, sy, W, fy - sy);
+
+  // sky above waterline (tank rim area)
+  ctx.fillStyle = isNight ? "#020409" : "#dff3f7";
+  ctx.fillRect(0, 0, W, sy);
+
+  // light rays
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, sy, W, fy - sy);
+  ctx.clip();
+  const rayAlpha = isNight ? 0.03 : 0.10;
+  for (let i = 0; i < 5; i++) {
+    const bx = (i / 5) * W + Math.sin(t * 0.15 + i) * 18;
+    const grad = ctx.createLinearGradient(bx, sy, bx + 60, fy);
+    grad.addColorStop(0, `rgba(255,255,255,${rayAlpha})`);
+    grad.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(bx - 20, sy);
+    ctx.lineTo(bx + 20, sy);
+    ctx.lineTo(bx + 70, fy);
+    ctx.lineTo(bx + 10, fy);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // surface ripple line
+  ctx.strokeStyle = isNight ? "rgba(180,220,255,.25)" : "rgba(255,255,255,.55)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let x = 0; x <= W; x += 8) {
+    const y = sy + Math.sin(x * 0.08 + t * 2) * 1.6;
+    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  if (isNight) {
+    // moonlight glow + a few stars in the "sky" strip
+    ctx.fillStyle = "rgba(220,235,255,.9)";
+    ctx.beginPath(); ctx.arc(W * 0.82, sy * 0.4, 9, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,.8)";
+    for (let i = 0; i < 12; i++) {
+      const sx = (i * 53.7) % W, sstar = (Math.sin(i * 12.9 + 1) + 1) / 2;
+      ctx.globalAlpha = 0.3 + sstar * 0.5;
+      ctx.fillRect(sx, (i * 13) % (sy * 0.9), 1.5, 1.5);
+    }
+    ctx.globalAlpha = 1;
+  } else {
+    ctx.fillStyle = "rgba(255,214,120,.9)";
+    ctx.beginPath(); ctx.arc(W * 0.85, sy * 0.4, 10, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+/* ---------------- substrate + decorations ---------------- */
+const gravelSeed = Array.from({ length: 220 }, () => ({ x: Math.random(), c: Math.random() }));
+function drawFloor() {
+  const fy = floorY();
+  ctx.fillStyle = isNight ? "#1b140d" : "#7a5a36";
+  ctx.fillRect(0, fy, W, H - fy);
+  for (const g of gravelSeed) {
+    const gx = g.x * W;
+    const gy = fy + 4 + (g.c * (H - fy - 8));
+    const shade = 0.5 + Math.sin(g.c * 40) * 0.2;
+    ctx.fillStyle = isNight
+      ? `rgba(${60 + shade * 40},${45 + shade * 30},${30 + shade * 20},.9)`
+      : `rgba(${150 + shade * 80},${110 + shade * 60},${60 + shade * 40},.9)`;
+    ctx.beginPath();
+    ctx.ellipse(gx, gy, 2 + shade * 2, 1.4 + shade, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawPlant(x, baseY, h, hueA, sway) {
+  const blades = 5;
+  for (let b = 0; b < blades; b++) {
+    const off = (b - blades / 2) * 6;
+    ctx.beginPath();
+    ctx.moveTo(x + off, baseY);
+    const midX = x + off + Math.sin(t * 1.1 + b + sway) * 10;
+    const tipX = x + off + Math.sin(t * 1.1 + b + sway + 1) * 16;
+    ctx.quadraticCurveTo(midX, baseY - h * 0.55, tipX, baseY - h);
+    ctx.lineWidth = 5 - b * 0.4;
+    ctx.strokeStyle = hueA;
+    ctx.lineCap = "round";
+    ctx.stroke();
+  }
+}
+
+function drawRock(x, y, s) {
+  ctx.fillStyle = isNight ? "#2c2c30" : "#6b6b6f";
+  ctx.beginPath();
+  ctx.ellipse(x, y, s, s * 0.6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = isNight ? "#3a3a40" : "#87878c";
+  ctx.beginPath();
+  ctx.ellipse(x - s * 0.2, y - s * 0.3, s * 0.5, s * 0.3, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawDecor() {
+  const fy = floorY();
+  drawRock(W * 0.18, fy + 6, 16);
+  drawRock(W * 0.22, fy + 10, 9);
+  drawPlant(W * 0.78, fy + 4, H * 0.34, isNight ? "#1f5c3a" : "#2e9c56", 0);
+  drawPlant(W * 0.86, fy + 6, H * 0.24, isNight ? "#164a2e" : "#238049", 1.4);
+  drawPlant(W * 0.10, fy + 2, H * 0.20, isNight ? "#1f5c3a" : "#2e9c56", 2.1);
+
+  // basking platform (floating driftwood, top-right, half in/out of water)
+  const px = W * 0.84, py = surfaceY() - 2;
+  ctx.fillStyle = "#4a3018";
+  ctx.beginPath();
+  ctx.ellipse(px, py, 34, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#5c3d20";
+  ctx.beginPath();
+  ctx.ellipse(px - 6, py - 3, 22, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+/* ---------------- air stone + bubbles ---------------- */
+let bubbles = [];
+const airStoneX = () => W * 0.5;
+function spawnBubble() {
+  bubbles.push({
+    x: airStoneX() + rand(-4, 4),
+    y: floorY() - 2,
+    r: rand(1.5, 3.5),
+    vy: rand(28, 46),
+    drift: rand(-6, 6)
+  });
+}
+function updateBubbles(dt) {
+  if (Math.random() < 0.35) spawnBubble();
+  const sy = surfaceY();
+  bubbles = bubbles.filter(b => b.y > sy);
+  for (const b of bubbles) {
+    b.y -= b.vy * dt;
+    b.x += Math.sin(b.y * 0.05) * b.drift * dt;
+  }
+}
+function drawBubbles() {
+  ctx.fillStyle = isNight ? "rgba(200,230,255,.35)" : "rgba(255,255,255,.55)";
+  for (const b of bubbles) {
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+/* ---------------- food ---------------- */
+let foods = [];
+function dropFood(x, y) {
+  foods.push({ x, y: Math.max(y, surfaceY() + 6), vy: 10, eaten: false, r: 3.5 });
+}
+function updateFood(dt) {
+  const fy = floorY();
+  for (const f of foods) {
+    if (f.y < fy - 6) f.y += f.vy * dt;
+  }
+  foods = foods.filter(f => !f.eaten);
+}
+function drawFood() {
+  ctx.fillStyle = "#c98a3b";
+  for (const f of foods) {
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+/* ---------------- goldfish ---------------- */
+class Goldfish {
+  constructor(hue) {
+    this.x = rand(W * 0.2, W * 0.8);
+    this.y = rand(H * 0.25, H * 0.7);
+    this.dir = rand(0, Math.PI * 2);
+    this.speed = rand(24, 34);
+    this.wiggle = rand(0, 10);
+    this.hue = hue;
+    this.size = rand(0.85, 1.15);
+    this.retarget = 0;
+    this.tx = this.x; this.ty = this.y;
+  }
+  pickTarget() {
+    const margin = 40;
+    this.tx = rand(margin, W - margin);
+    this.ty = rand(surfaceY() + 24, floorY() - 14);
+    this.retarget = rand(2.5, 5);
+  }
+  update(dt) {
+    this.retarget -= dt;
+    // chase nearest un-eaten food if any
+    let target = null, best = Infinity;
+    for (const f of foods) {
+      if (f.eaten) continue;
+      const d = Math.hypot(f.x - this.x, f.y - this.y);
+      if (d < best) { best = d; target = f; }
+    }
+    if (target) {
+      this.tx = target.x; this.ty = target.y;
+      if (best < 8) { target.eaten = true; }
+    } else if (this.retarget <= 0) {
+      this.pickTarget();
+    }
+    const dx = this.tx - this.x, dy = this.ty - this.y;
+    const dist = Math.hypot(dx, dy) || 1;
+    const wantDir = Math.atan2(dy, dx);
+    let diff = wantDir - this.dir;
+    while (diff > Math.PI) diff -= Math.PI * 2;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+    this.dir += diff * Math.min(1, dt * 2.2);
+    const speed = target ? this.speed * 1.3 : this.speed;
+    const step = Math.min(speed * dt, dist);
+    this.x += Math.cos(this.dir) * step;
+    this.y += Math.sin(this.dir) * step;
+    this.x = clamp(this.x, 20, W - 20);
+    this.y = clamp(this.y, surfaceY() + 16, floorY() - 10);
+    this.wiggle += dt * (6 + speed * 0.15);
+  }
+  draw() {
+    const s = 15 * this.size;
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    const flip = Math.cos(this.dir) < 0;
+    ctx.scale(flip ? -1 : 1, 1);
+    const facing = flip ? Math.PI - this.dir : this.dir;
+    ctx.rotate(Math.sin(this.wiggle) * 0.06);
+
+    const bodyGrad = ctx.createLinearGradient(-s, 0, s, 0);
+    bodyGrad.addColorStop(0, this.hue.dark);
+    bodyGrad.addColorStop(1, this.hue.light);
+
+    // tail
+    const tailWag = Math.sin(this.wiggle * 1.6) * 0.5;
+    ctx.fillStyle = this.hue.light;
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.9, 0);
+    ctx.quadraticCurveTo(-s * 1.6, -s * 0.9 + tailWag * s * 0.4, -s * 2.1, tailWag * s * 0.9);
+    ctx.quadraticCurveTo(-s * 1.6, s * 0.9 + tailWag * s * 0.4, -s * 0.9, 0);
+    ctx.fill();
+
+    // body (round, fancy-goldfish shaped)
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, s * 0.95, s * 0.72, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // calico patches
+    if (this.hue.patch) {
+      ctx.fillStyle = this.hue.patch;
+      ctx.beginPath(); ctx.ellipse(-s * 0.2, -s * 0.2, s * 0.3, s * 0.22, 0.3, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(s * 0.3, s * 0.15, s * 0.22, s * 0.16, -0.4, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // dorsal fin
+    ctx.fillStyle = this.hue.light;
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.1, -s * 0.6);
+    ctx.quadraticCurveTo(s * 0.1, -s * 1.15, s * 0.35, -s * 0.55);
+    ctx.quadraticCurveTo(s * 0.05, -s * 0.7, -s * 0.1, -s * 0.6);
+    ctx.fill();
+
+    // pectoral fin
+    const finWag = Math.sin(this.wiggle * 2.2) * 0.3 + 0.3;
+    ctx.beginPath();
+    ctx.ellipse(s * 0.05, s * 0.55, s * 0.32, s * 0.16, 0.9 + finWag, 0, Math.PI * 2);
+    ctx.fill();
+
+    // telescope (bug) eyes — the signature feature
+    for (const side of [-1, 1]) {
+      const ex = s * 0.55, ey = side * s * 0.32;
+      // eye stalk shadow
+      ctx.fillStyle = "rgba(0,0,0,.12)";
+      ctx.beginPath(); ctx.ellipse(ex + 1, ey + 1, s * 0.24, s * 0.24, 0, 0, Math.PI * 2); ctx.fill();
+      // bulging white sclera
+      ctx.fillStyle = "#fff8ec";
+      ctx.beginPath(); ctx.arc(ex, ey, s * 0.24, 0, Math.PI * 2); ctx.fill();
+      // black pupil
+      ctx.fillStyle = "#191410";
+      ctx.beginPath(); ctx.arc(ex + s * 0.05, ey, s * 0.13, 0, Math.PI * 2); ctx.fill();
+      // glint
+      ctx.fillStyle = "rgba(255,255,255,.85)";
+      ctx.beginPath(); ctx.arc(ex + s * 0.02, ey - s * 0.06, s * 0.045, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // mouth
+    ctx.strokeStyle = "rgba(0,0,0,.25)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(s * 0.85, 0);
+    ctx.lineTo(s * 0.95, 0);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+}
+
+/* ---------------- red-eared slider turtle ---------------- */
+class Turtle {
+  constructor() {
+    this.x = W * 0.3; this.y = floorY() - 20;
+    this.dir = 0;
+    this.speed = 20;
+    this.legPhase = 0;
+    this.state = "swim"; // swim | toSurface | surfaced | diving
+    this.stateTimer = rand(6, 12);
+    this.tx = this.x; this.ty = this.y;
+    this.pickTarget();
+  }
+  pickTarget() {
+    const margin = 34;
+    this.tx = rand(margin, W - margin);
+    this.ty = rand(floorY() - 60, floorY() - 12);
+  }
+  update(dt) {
+    this.stateTimer -= dt;
+    if (this.state === "swim") {
+      const dx = this.tx - this.x, dy = this.ty - this.y;
+      const dist = Math.hypot(dx, dy) || 1;
+      if (dist < 12 || this.stateTimer <= 0) {
+        if (Math.random() < 0.3) { this.state = "toSurface"; this.stateTimer = 20; }
+        else { this.pickTarget(); this.stateTimer = rand(6, 12); }
+      }
+    } else if (this.state === "toSurface") {
+      const px = W * 0.84, py = surfaceY() - 6;
+      this.tx = px; this.ty = py;
+      if (Math.hypot(px - this.x, py - this.y) < 10) { this.state = "surfaced"; this.stateTimer = rand(4, 8); }
+    } else if (this.state === "surfaced") {
+      this.tx = this.x; this.ty = this.y;
+      if (this.stateTimer <= 0) { this.state = "diving"; this.pickTarget(); this.stateTimer = 8; }
+    } else if (this.state === "diving") {
+      if (Math.hypot(this.tx - this.x, this.ty - this.y) < 12) { this.state = "swim"; this.stateTimer = rand(6, 12); }
+    }
+
+    if (this.state !== "surfaced") {
+      const dx = this.tx - this.x, dy = this.ty - this.y;
+      const dist = Math.hypot(dx, dy) || 1;
+      const wantDir = Math.atan2(dy, dx);
+      let diff = wantDir - this.dir;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      this.dir += diff * Math.min(1, dt * 1.6);
+      const step = Math.min(this.speed * dt, dist);
+      this.x += Math.cos(this.dir) * step;
+      this.y += Math.sin(this.dir) * step;
+      this.legPhase += dt * 5;
+    } else {
+      this.legPhase += dt * 1.2;
+    }
+    this.x = clamp(this.x, 26, W - 26);
+    this.y = clamp(this.y, surfaceY() + 10, floorY() - 8);
+  }
+  draw() {
+    const s = 22;
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    const flip = Math.cos(this.dir) < 0;
+    ctx.scale(flip ? -1 : 1, 1);
+
+    // legs (paddles), behind shell
+    ctx.fillStyle = "#2f6b3a";
+    for (let i = 0; i < 4; i++) {
+      const side = i < 2 ? -1 : 1;
+      const front = i % 2 === 0;
+      const phase = this.legPhase + (front ? 0 : Math.PI) + (side < 0 ? 0 : Math.PI);
+      const swing = Math.sin(phase) * 10;
+      const lx = (front ? s * 0.55 : -s * 0.55) + swing * 0.3;
+      const ly = side * s * 0.55 + Math.cos(phase) * 4;
+      ctx.beginPath();
+      ctx.ellipse(lx, ly, 9, 4.5, side * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // shell
+    const shellGrad = ctx.createRadialGradient(-s * 0.2, -s * 0.2, 4, 0, 0, s);
+    shellGrad.addColorStop(0, "#4d8a4a");
+    shellGrad.addColorStop(1, "#2c5c33");
+    ctx.fillStyle = shellGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, s, s * 0.72, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(0,0,0,.25)";
+    ctx.lineWidth = 1;
+    // scute pattern
+    for (let i = -1; i <= 1; i++) {
+      ctx.beginPath();
+      ctx.ellipse(i * s * 0.4, 0, s * 0.32, s * 0.5, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // head + neck
+    ctx.fillStyle = "#3f7a45";
+    ctx.beginPath();
+    ctx.ellipse(s * 1.05, -2, 8, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // red ear patch
+    ctx.fillStyle = "#c1503f";
+    ctx.beginPath();
+    ctx.ellipse(s * 1.08, -7, 3.4, 2, 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    // eye
+    ctx.fillStyle = "#161a12";
+    ctx.beginPath();
+    ctx.arc(s * 1.1, -3, 1.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+}
+
+/* ---------------- click / feed sound (small synthesized blip) ---------------- */
+let audioCtx = null;
+function playBlip(freq = 480) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    const t0 = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, t0);
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.6, t0 + 0.12);
+    gain.gain.setValueAtTime(0.001, t0);
+    gain.gain.exponentialRampToValueAtTime(0.12, t0 + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.15);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t0); osc.stop(t0 + 0.16);
+  } catch (_) {}
+}
+
+/* ---------------- scene setup ---------------- */
+const PALETTES = [
+  { light: "#ffb84d", dark: "#ff7a2e" },
+  { light: "#ffcf6b", dark: "#ff9a3d", patch: "rgba(255,255,255,.55)" },
+  { light: "#ff9d6b", dark: "#e85a2e" }
+];
+let fishes = PALETTES.map(p => new Goldfish(p));
+let turtle = new Turtle();
+
+function randomFeedBurst() {
+  const x = rand(W * 0.25, W * 0.75);
+  for (let i = 0; i < 3; i++) dropFood(x + rand(-16, 16), surfaceY() + 8 + i * 4);
+  playBlip(620);
+}
+document.getElementById("btnFeed").addEventListener("click", randomFeedBurst);
+document.getElementById("btnCycle").addEventListener("click", () => {
+  isNight = !isNight;
+  playBlip(isNight ? 300 : 700);
+});
+canvas.addEventListener("click", e => {
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left, y = e.clientY - rect.top;
+  if (y < surfaceY() || y > floorY()) return;
+  dropFood(x, surfaceY() + 6);
+  playBlip(560);
+});
+
+/* ---------------- main loop ---------------- */
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  t += dt;
+
+  updateBubbles(dt);
+  updateFood(dt);
+  turtle.update(dt);
+  for (const f of fishes) f.update(dt);
+
+  ctx.clearRect(0, 0, W, H);
+  drawWater();
+  drawDecor();
+  drawFloor();
+  drawBubbles();
+  drawFood();
+
+  // depth-sort turtle + fish so whichever is "lower" on screen draws on top
+  const actors = [turtle, ...fishes].sort((a, b) => a.y - b.y);
+  for (const a of actors) a.draw();
+
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
