@@ -63,10 +63,6 @@ button.gold{
   background:linear-gradient(160deg,var(--gold),#a9782f);color:#231705;
   border-color:var(--gold);
 }
-#hint{
-  position:absolute;bottom:-46px;left:0;right:0;text-align:center;
-  font-size:11px;color:var(--muted);
-}
 </style>
 </head>
 <body>
@@ -79,7 +75,6 @@ button.gold{
     <button id="btnFeed" class="gold">🍤 投食</button>
     <button id="btnCycle">🌗 昼/夜</button>
   </div>
-  <div id="hint">点一下缸里也能投食</div>
 </div>
 
 <script>
@@ -441,7 +436,23 @@ class Turtle {
   }
   update(dt) {
     this.stateTimer -= dt;
+    // Compete for food like the goldfish do, but only while calmly cruising
+    // (not mid-surface-trip) — the turtle is slower, so it won't always win,
+    // but it will now actually go for it instead of ignoring food entirely.
+    let chasingFood = null;
     if (this.state === "swim") {
+      let best = Infinity;
+      for (const f of foods) {
+        if (f.eaten) continue;
+        const d = Math.hypot(f.x - this.x, f.y - this.y);
+        if (d < best) { best = d; chasingFood = f; }
+      }
+      if (chasingFood) {
+        this.tx = chasingFood.x; this.ty = chasingFood.y;
+        if (best < 15) { chasingFood.eaten = true; chasingFood = null; }
+      }
+    }
+    if (!chasingFood && this.state === "swim") {
       const dx = this.tx - this.x, dy = this.ty - this.y;
       const dist = Math.hypot(dx, dy) || 1;
       if (dist < 12 || this.stateTimer <= 0) {
@@ -467,10 +478,11 @@ class Turtle {
       while (diff > Math.PI) diff -= Math.PI * 2;
       while (diff < -Math.PI) diff += Math.PI * 2;
       this.dir += diff * Math.min(1, dt * 1.6);
-      const step = Math.min(this.speed * dt, dist);
+      const speed = chasingFood ? this.speed * 1.4 : this.speed;
+      const step = Math.min(speed * dt, dist);
       this.x += Math.cos(this.dir) * step;
       this.y += Math.sin(this.dir) * step;
-      this.legPhase += dt * 5;
+      this.legPhase += dt * (chasingFood ? 7 : 5);
     } else {
       this.legPhase += dt * 1.2;
     }
