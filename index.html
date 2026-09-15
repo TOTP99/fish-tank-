@@ -7,132 +7,142 @@
 <title>大鱼缸 · 生态版</title>
 <style>
 :root{
-  --frame:#2b2118;
-  --frame-hi:#4a3a26;
-  --ink:#eef6f8;
-  --muted:#9fb8bd;
-  --gold:#e0b25a;
+  --frame:#2b2118;--frame-hi:#4a3a26;--ink:#eef6f8;--muted:#9fb8bd;
+  --gold:#e0b25a;--gold-line:rgba(224,178,90,.55);
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:#0a0d10;overflow:hidden;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 body{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom);
-  min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;min-height:100dvh;
+  padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right))
+          max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
 }
+#app{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  width:100%;max-width:440px;max-height:100%;gap:8px;
+}
+#sideDisplay{order:2}
+#stage{order:1}
+#sideControls{order:3}
 #stage{
-  position:relative;width:100%;max-width:720px;
-  aspect-ratio:4/5;
-  border-radius:18px;
-  padding:14px 14px 22px;
+  position:relative;width:100%;flex:0 1 auto;min-height:0;
+  aspect-ratio:4/5;max-height:min(68vh,580px);
+  border-radius:16px;padding:10px;
   background:linear-gradient(155deg,var(--frame-hi),var(--frame) 40%,#1a130c);
-  box-shadow:0 18px 40px rgba(0,0,0,.55),inset 0 2px 0 rgba(255,255,255,.06);
+  box-shadow:0 14px 36px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);
 }
 #tankWrap{
-  position:relative;width:100%;height:100%;
-  border-radius:8px;overflow:hidden;
-  box-shadow:inset 0 0 0 3px rgba(255,255,255,.08),inset 0 10px 30px rgba(0,0,0,.5);
+  position:relative;width:100%;height:100%;border-radius:8px;overflow:hidden;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.08),inset 0 8px 24px rgba(0,0,0,.45);
 }
 canvas{display:block;width:100%;height:100%}
 #hud{
-  position:absolute;top:8px;left:0;right:0;
-  display:flex;justify-content:flex-start;align-items:center;
-  padding:0 8px;pointer-events:none;gap:8px;flex-wrap:wrap;
+  position:absolute;top:6px;left:0;right:0;
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  padding:0 6px;pointer-events:none;
 }
-#title{
-  color:var(--gold);font-weight:800;font-size:12px;letter-spacing:.4px;
-  text-shadow:0 1px 3px rgba(0,0,0,.6);
-  background:rgba(0,0,0,.3);padding:4px 10px;border-radius:12px;
+#titleWrap{
+  display:flex;flex-direction:column;align-items:flex-start;gap:1px;
+  background:rgba(0,0,0,.3);padding:3px 8px;border-radius:10px;
 }
-#btnAddFish{
-  pointer-events:auto;
-  border:1px solid rgba(255,200,100,.45);border-radius:12px;
-  padding:4px 10px;font-size:11px;font-weight:800;cursor:pointer;
+#title{color:var(--gold);font-weight:800;font-size:11px;letter-spacing:.3px;
+  text-shadow:0 1px 3px rgba(0,0,0,.6)}
+#credit{color:var(--gold);font-size:8px;font-weight:600;opacity:.85;letter-spacing:.6px}
+#btnAddFish,#hud #btnFeed{
+  pointer-events:auto;border:1px solid rgba(255,200,100,.45);border-radius:10px;
+  padding:3px 8px;font-size:10px;font-weight:800;cursor:pointer;
   background:linear-gradient(160deg,var(--gold),#a9782f);color:#231705;
-  box-shadow:0 2px 8px rgba(0,0,0,.35);
 }
-#btnAddFish:active{transform:scale(.94)}
+#btnAddFish{padding:4px 8px}
+#btnAddFish:active,#hud #btnFeed:active{transform:scale(.94)}
 #popStatHud{
-  pointer-events:none;
-  font-size:11px;font-weight:700;color:var(--ink);
-  background:rgba(0,0,0,.3);padding:4px 8px;border-radius:10px;
-  text-shadow:0 1px 2px rgba(0,0,0,.6);
-}
-#wqMonitor{
-  pointer-events:none;
-  margin-left:auto;
   font-size:10px;font-weight:700;color:var(--ink);
-  background:rgba(0,0,0,.4);padding:5px 10px;border-radius:10px;
-  text-shadow:0 1px 2px rgba(0,0,0,.7);
-  max-width:46%;
-  line-height:1.35;
-  border:1px solid rgba(255,255,255,.12);
-}
-#wqMonitor.warn{border-color:rgba(212,160,23,.7);background:rgba(60,40,10,.55)}
-#wqMonitor.danger{border-color:rgba(212,69,47,.85);background:rgba(60,15,10,.6);
-  animation:pulseDanger 1.2s ease-in-out infinite}
-@keyframes pulseDanger{
-  0%,100%{box-shadow:0 0 0 0 rgba(212,69,47,0)}
-  50%{box-shadow:0 0 0 3px rgba(212,69,47,.35)}
+  background:rgba(0,0,0,.3);padding:3px 7px;border-radius:8px;
+  text-shadow:0 1px 2px rgba(0,0,0,.6);
 }
 #wqAlert{
   position:absolute;left:50%;top:12%;transform:translateX(-50%);
-  pointer-events:none;z-index:5;
-  font-size:12px;font-weight:800;color:#fff;
-  background:rgba(180,40,30,.88);padding:6px 14px;border-radius:12px;
+  pointer-events:none;z-index:5;font-size:11px;font-weight:800;color:#fff;
+  background:rgba(180,40,30,.88);padding:5px 12px;border-radius:10px;
   opacity:0;transition:opacity .35s;white-space:nowrap;
-  text-shadow:0 1px 3px rgba(0,0,0,.5);
 }
 #wqAlert.show{opacity:1}
-#controls{
-  position:absolute;bottom:-6px;left:0;right:0;
-  display:flex;justify-content:center;flex-wrap:wrap;gap:8px;align-items:center;
-  transform:translateY(100%);padding-top:12px;
+#sideDisplay,#sideControls{
+  width:100%;border:1px solid var(--gold-line);border-radius:12px;
+  background:linear-gradient(165deg,#1c1610,#120e0a);
+  box-shadow:0 4px 16px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04);
+  padding:6px 8px;
 }
+#sideDisplay{display:flex;flex-direction:column;gap:4px}
+#sideControls{display:flex;flex-direction:column;gap:5px}
+.ctrl-row{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:5px}
 button,.ctrl-stat{
-  border:1px solid rgba(255,255,255,.15);border-radius:14px;
-  padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;
+  border:1px solid rgba(255,255,255,.12);border-radius:10px;
+  padding:5px 8px;font-size:10px;font-weight:700;cursor:pointer;
   background:linear-gradient(160deg,#2c2115,#1c150d);color:var(--ink);
-  box-shadow:0 4px 12px rgba(0,0,0,.4);
-  transition:transform .12s;
-  display:inline-flex;align-items:center;gap:6px;
+  box-shadow:0 2px 6px rgba(0,0,0,.3);transition:transform .12s;
+  display:inline-flex;align-items:center;gap:4px;line-height:1.2;
 }
-button:active,.ctrl-stat:active{transform:scale(.94)}
-button.gold{
-  background:linear-gradient(160deg,var(--gold),#a9782f);color:#231705;
-  border-color:var(--gold);
-}
+button:active{transform:scale(.94)}
+button.gold{background:linear-gradient(160deg,var(--gold),#a9782f);color:#231705;border-color:var(--gold)}
 .ctrl-stat{cursor:default;user-select:none}
-#popStat{cursor:pointer}
-#popStat:hover{border-color:var(--gold);color:var(--gold)}
-.bar{
-  width:48px;height:7px;border-radius:4px;background:rgba(255,255,255,.15);
-  overflow:hidden;display:inline-block;vertical-align:middle;
+#wqMonitor{font-size:9px;font-weight:700;color:var(--ink);line-height:1.35;padding:2px;
+  text-shadow:0 1px 2px rgba(0,0,0,.5)}
+#wqMonitor.warn{color:#e8c45a}
+#wqMonitor.danger{color:#ff8a7a;animation:pulseDanger 1.2s ease-in-out infinite}
+@keyframes pulseDanger{0%,100%{opacity:1}50%{opacity:.75}}
+.bar{width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.12);
+  overflow:hidden;display:inline-block;vertical-align:middle}
+.bar>i{display:block;height:100%;border-radius:3px;transition:width .3s,background .3s}
+@media (orientation:landscape) and (min-width:560px){
+  body{padding:max(10px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right))
+              max(10px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}
+  #app{flex-direction:row;align-items:stretch;justify-content:center;
+    max-width:min(1100px,100%);max-height:100%;gap:12px}
+  #stage{order:2;width:auto;flex:0 1 auto;height:min(86vh,520px);max-height:86vh;
+    aspect-ratio:4/5;max-width:min(42vw,420px)}
+  #sideDisplay{order:1;width:min(200px,22vw);flex:0 0 auto;justify-content:center;padding:10px 8px}
+  #sideControls{order:3;width:min(200px,22vw);flex:0 0 auto;justify-content:center;padding:10px 8px}
+  #sideControls .ctrl-row{flex-direction:column;align-items:stretch}
+  #sideControls button{justify-content:center;width:100%;font-size:11px;padding:7px 8px}
+  #wqMonitor{font-size:10px}
+  #popStatHud{font-size:11px}
 }
-.bar>i{display:block;height:100%;border-radius:4px;transition:width .3s,background .3s}
 </style>
 </head>
 <body>
-<div id="stage">
-  <div id="tankWrap">
-    <canvas id="tank"></canvas>
-    <div id="hud">
-      <span id="title">🐢 生态鱼缸</span>
-      <button type="button" id="btnAddFish" title="添加一条大金鱼">🐟+</button>
-      <span id="popStatHud">🐟 3</span>
-      <div id="wqMonitor">水质监测 · 优秀</div>
+<div id="app">
+  <div id="sideDisplay">
+    <div id="popStatHud">🐟 3</div>
+    <div id="wqMonitor">水质监测 · 优秀</div>
+    <div class="ctrl-row">
+      <button type="button" id="btnAddFish" title="添加大金鱼">🐟+</button>
+      <span class="ctrl-stat">水质 <span class="bar"><i id="wqBar"></i></span></span>
+      <span class="ctrl-stat">氧气 <span class="bar"><i id="oxBar"></i></span></span>
     </div>
-    <div id="wqAlert"></div>
   </div>
-  <div id="controls">
-    <button id="btnFeed" class="gold">🍤 投食</button>
-    <button id="btnCycle">🌗 昼/夜</button>
-    <button id="btnWater">💧 换水</button>
-    <button id="btnFilter">🌀 过滤</button>
-    <button id="btnTrim">🌿 修剪</button>
-    <span class="ctrl-stat">水质 <span class="bar"><i id="wqBar"></i></span></span>
-    <span class="ctrl-stat">氧气 <span class="bar"><i id="oxBar"></i></span></span>
+  <div id="stage">
+    <div id="tankWrap">
+      <canvas id="tank"></canvas>
+      <div id="hud">
+        <div id="titleWrap">
+          <span id="title">🐢 生态鱼缸</span>
+          <span id="credit">TP制作🐠</span>
+        </div>
+        <button type="button" id="btnFeed" class="gold" title="投食">🍤 投食</button>
+      </div>
+      <div id="wqAlert"></div>
+    </div>
+  </div>
+  <div id="sideControls">
+    <div class="ctrl-row">
+      <button id="btnFilter">🌀 过滤</button>
+      <button id="btnWater">💧 换水</button>
+      <button id="btnCycle">🌗 昼/夜</button>
+      <button id="btnTrim">🌿 修剪</button>
+    </div>
   </div>
 </div>
 
@@ -141,7 +151,6 @@ button.gold{
 const canvas = document.getElementById("tank");
 const ctx = canvas.getContext("2d", { alpha: false });
 let W = 0, H = 0, DPR = 1;
-
 const staticCanvas = document.createElement("canvas");
 const staticCtx = staticCanvas.getContext("2d");
 let staticDirty = true;
@@ -152,8 +161,7 @@ function resize() {
   W = rect.width; H = rect.height;
   canvas.width = W * DPR; canvas.height = H * DPR;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  staticCanvas.width = W * DPR;
-  staticCanvas.height = H * DPR;
+  staticCanvas.width = W * DPR; staticCanvas.height = H * DPR;
   staticCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
   staticDirty = true;
 }
@@ -162,25 +170,27 @@ resize();
 
 const rand = (a, b) => a + Math.random() * (b - a);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-let isNight = false;
-let t = 0;
-
+let isNight = false, t = 0;
 const surfaceY = () => H * 0.10;
 const floorY = () => H * 0.90;
 
-/* ========== ECOSYSTEM STATE ========== */
-let waterQuality = 0.92; // 0..1  clean water
-let nutrients = 0.25;    // plant fertilizer from waste
-let oxygen = 0.85;       // 0..1  dissolved oxygen
-let filterOn = false;    // mechanical + bio filter
-const MAX_FISH = 12;
-const MAX_EGGS = 8;
+/* —— ecosystem —— */
+let waterQuality = 0.92, nutrients = 0.25, oxygen = 0.85, filterOn = false;
+const MAX_FISH = 12, MAX_EGGS = 8, MAX_BUBBLES = 40;
+const wqHistory = [];
+let wqLastGrade = "excellent", wqAlertTimer = 0, wqSampleAcc = 0;
 
-/* —— water quality monitoring —— */
-const wqHistory = []; // recent samples for trend
-let wqLastGrade = "excellent";
-let wqAlertTimer = 0;
-let wqPolluteLog = { waste: 0, bioload: 0, death: 0 }; // rolling pressure flags
+function plantCoverAt(x, y) {
+  let best = 0;
+  const fy = floorY();
+  for (const p of plants) {
+    const px = W * p.xFrac, py = fy - H * p.h * 0.45;
+    const rad = 22 + p.h * H * 0.22;
+    const d = Math.hypot(x - px, y - py);
+    if (d < rad) best = Math.max(best, (1 - d / rad) * p.health * Math.min(1, p.h / p.baseH));
+  }
+  return best;
+}
 
 function wqGrade(q) {
   if (q >= 0.75) return { id: "excellent", label: "优秀", cls: "" };
@@ -191,66 +201,49 @@ function wqGrade(q) {
 }
 function wqTrend() {
   if (wqHistory.length < 4) return "→";
-  const a = wqHistory[wqHistory.length - 1];
-  const b = wqHistory[Math.max(0, wqHistory.length - 6)];
-  const d = a - b;
-  if (d > 0.03) return "↑";
-  if (d < -0.03) return "↓";
-  return "→";
+  const d = wqHistory[wqHistory.length - 1] - wqHistory[Math.max(0, wqHistory.length - 6)];
+  return d > 0.03 ? "↑" : d < -0.03 ? "↓" : "→";
 }
-function wqAdvice(q) {
+function wqAdvice() {
   const tips = [];
-  if (q < 0.55 && !filterOn) tips.push("开过滤");
-  if (q < 0.45) tips.push("换水");
+  if (waterQuality < 0.55 && !filterOn) tips.push("开过滤");
+  if (waterQuality < 0.45) tips.push("换水");
   if (nutrients > 0.7) tips.push("残饵多");
   if (oxygen < 0.35) tips.push("缺氧");
-  const n = typeof fishes !== "undefined" ? fishes.filter(f => f.alive).length : 0;
-  if (n > 7) tips.push("过密");
-  if (foods && foods.filter(f => !f.eaten && f.age > 6).length > 2) tips.push("清残饵");
+  if (fishes.filter(f => f.alive).length > 7) tips.push("过密");
+  if (foods.filter(f => !f.eaten && f.age > 6).length > 2) tips.push("清残饵");
   return tips.slice(0, 2).join(" · ") || "稳定";
 }
-function pushWqSample(dt) {
-  // sample ~every 0.5s worth accumulated via caller
+function pushWqSample() {
   wqHistory.push(waterQuality);
   if (wqHistory.length > 24) wqHistory.shift();
   const g = wqGrade(waterQuality);
   if (g.id !== wqLastGrade) {
-    if (g.id === "poor" || g.id === "critical" ||
-        (wqLastGrade === "critical" && g.id === "fair")) {
-      showWqAlert(g.id === "critical" ? "⚠ 水质危险！请换水或开过滤"
-        : g.id === "poor" ? "水质下降，注意监测"
-        : "水质开始回升");
-    }
+    if (g.id === "critical") showWqAlert("⚠ 水质危险！请换水或开过滤");
+    else if (g.id === "poor") showWqAlert("水质下降，注意监测");
+    else if (wqLastGrade === "critical" || wqLastGrade === "poor") showWqAlert("水质开始回升");
     wqLastGrade = g.id;
   }
 }
 function showWqAlert(msg) {
   const el = document.getElementById("wqAlert");
-  if (!el) return;
   el.textContent = msg;
   el.classList.add("show");
   wqAlertTimer = 3.2;
 }
 
-/** How deep a point is inside plant cover (0 = open, 1 = deep hide). */
-function plantCoverAt(x, y) {
-  let best = 0;
-  const fy = floorY();
-  for (const p of plants) {
-    const px = W * p.xFrac;
-    const py = fy - H * p.h * 0.45;
-    const rad = 22 + p.h * H * 0.22;
-    const d = Math.hypot(x - px, y - py);
-    if (d < rad) best = Math.max(best, (1 - d / rad) * p.health * Math.min(1, p.h / p.baseH));
-  }
-  return best;
+function lerpColor(a, b, u) {
+  u = clamp(u, 0, 1);
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  const r = (((pa >> 16) & 255) * (1 - u) + ((pb >> 16) & 255) * u) | 0;
+  const g = (((pa >> 8) & 255) * (1 - u) + ((pb >> 8) & 255) * u) | 0;
+  const bl = ((pa & 255) * (1 - u) + (pb & 255) * u) | 0;
+  return `rgb(${r},${g},${bl})`;
 }
 
-/* ========== WATER ========== */
+/* —— water —— */
 function drawWater() {
-  const sy = surfaceY(), fy = floorY();
-  // tint water by quality (dirty = murky green-brown)
-  const murk = 1 - waterQuality;
+  const sy = surfaceY(), fy = floorY(), murk = 1 - waterQuality;
   const day = ctx.createLinearGradient(0, sy, 0, fy);
   if (isNight) {
     day.addColorStop(0, lerpColor("#0c2b3a", "#1a2a18", murk));
@@ -264,24 +257,18 @@ function drawWater() {
   }
   ctx.fillStyle = day;
   ctx.fillRect(0, sy, W, fy - sy);
-
   ctx.fillStyle = isNight ? "#020409" : "#dff3f7";
   ctx.fillRect(0, 0, W, sy);
 
   ctx.save();
-  ctx.beginPath();
-  ctx.rect(0, sy, W, fy - sy);
-  ctx.clip();
+  ctx.beginPath(); ctx.rect(0, sy, W, fy - sy); ctx.clip();
   ctx.fillStyle = isNight ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.09)";
   for (let i = 0; i < 5; i++) {
     const bx = (i / 5) * W + Math.sin(t * 0.15 + i) * 18;
     ctx.beginPath();
-    ctx.moveTo(bx - 18, sy);
-    ctx.lineTo(bx + 18, sy);
-    ctx.lineTo(bx + 55, fy);
-    ctx.lineTo(bx + 8, fy);
-    ctx.closePath();
-    ctx.fill();
+    ctx.moveTo(bx - 18, sy); ctx.lineTo(bx + 18, sy);
+    ctx.lineTo(bx + 55, fy); ctx.lineTo(bx + 8, fy);
+    ctx.closePath(); ctx.fill();
   }
   ctx.restore();
 
@@ -299,8 +286,8 @@ function drawWater() {
     ctx.beginPath(); ctx.arc(W * 0.82, sy * 0.4, 9, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = "rgba(255,255,255,.8)";
     for (let i = 0; i < 12; i++) {
-      const sx = (i * 53.7) % W, sstar = (Math.sin(i * 12.9 + 1) + 1) / 2;
-      ctx.globalAlpha = 0.3 + sstar * 0.5;
+      const sx = (i * 53.7) % W;
+      ctx.globalAlpha = 0.3 + ((Math.sin(i * 12.9 + 1) + 1) / 2) * 0.5;
       ctx.fillRect(sx, (i * 13) % (sy * 0.9), 1.5, 1.5);
     }
     ctx.globalAlpha = 1;
@@ -310,20 +297,8 @@ function drawWater() {
   }
 }
 
-function lerpColor(a, b, t) {
-  t = clamp(t, 0, 1);
-  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
-  const ar = (pa >> 16) & 255, ag = (pa >> 8) & 255, ab = pa & 255;
-  const br = (pb >> 16) & 255, bg = (pb >> 8) & 255, bb = pb & 255;
-  const r = (ar + (br - ar) * t) | 0;
-  const g = (ag + (bg - ag) * t) | 0;
-  const bl = (ab + (bb - ab) * t) | 0;
-  return `rgb(${r},${g},${bl})`;
-}
-
-/* ========== STATIC FLOOR ========== */
+/* —— static floor —— */
 const gravelSeed = Array.from({ length: 220 }, () => ({ x: Math.random(), c: Math.random() }));
-
 function rebuildStaticLayer() {
   const c = staticCtx;
   c.clearRect(0, 0, W, H);
@@ -331,8 +306,7 @@ function rebuildStaticLayer() {
   c.fillStyle = isNight ? "#1b140d" : "#7a5a36";
   c.fillRect(0, fy, W, H - fy);
   for (const g of gravelSeed) {
-    const gx = g.x * W;
-    const gy = fy + 4 + (g.c * (H - fy - 8));
+    const gx = g.x * W, gy = fy + 4 + g.c * (H - fy - 8);
     const shade = 0.5 + Math.sin(g.c * 40) * 0.2;
     c.fillStyle = isNight
       ? `rgba(${60 + shade * 40},${45 + shade * 30},${30 + shade * 20},.9)`
@@ -343,123 +317,84 @@ function rebuildStaticLayer() {
   }
   function rock(x, y, s) {
     c.fillStyle = isNight ? "#2c2c30" : "#6b6b6f";
-    c.beginPath();
-    c.ellipse(x, y, s, s * 0.6, 0, 0, Math.PI * 2);
-    c.fill();
+    c.beginPath(); c.ellipse(x, y, s, s * 0.6, 0, 0, Math.PI * 2); c.fill();
     c.fillStyle = isNight ? "#3a3a40" : "#87878c";
-    c.beginPath();
-    c.ellipse(x - s * 0.2, y - s * 0.3, s * 0.5, s * 0.3, 0, 0, Math.PI * 2);
-    c.fill();
+    c.beginPath(); c.ellipse(x - s * 0.2, y - s * 0.3, s * 0.5, s * 0.3, 0, 0, Math.PI * 2); c.fill();
   }
   rock(W * 0.18, fy + 6, 16);
   rock(W * 0.22, fy + 10, 9);
   const px = W * 0.84, py = surfaceY() - 2;
   c.fillStyle = "#4a3018";
-  c.beginPath();
-  c.ellipse(px, py, 34, 8, 0, 0, Math.PI * 2);
-  c.fill();
+  c.beginPath(); c.ellipse(px, py, 34, 8, 0, 0, Math.PI * 2); c.fill();
   c.fillStyle = "#5c3d20";
-  c.beginPath();
-  c.ellipse(px - 6, py - 3, 22, 5, 0, 0, Math.PI * 2);
-  c.fill();
+  c.beginPath(); c.ellipse(px - 6, py - 3, 22, 5, 0, 0, Math.PI * 2); c.fill();
   staticDirty = false;
 }
 
-/* ========== PLANTS (living) ========== */
+/* —— plants —— */
 const plants = [
   { xFrac: 0.78, baseH: 0.34, h: 0.34, sway: 0, health: 1 },
   { xFrac: 0.86, baseH: 0.24, h: 0.24, sway: 1.4, health: 1 },
   { xFrac: 0.10, baseH: 0.20, h: 0.20, sway: 2.1, health: 1 }
 ];
-
 function updatePlants(dt) {
-  // growth boosted by nutrients + oxygen + daylight; filter stabilizes roots a bit
   const light = isNight ? 0.025 : 0.09;
-  const oxBoost = 0.5 + oxygen * 0.8;
-  const filBoost = filterOn ? 1.15 : 1;
-  const grow = light * (0.35 + nutrients * 1.1) * oxBoost * filBoost * dt;
-  let totalH = 0;
+  const grow = light * (0.35 + nutrients * 1.1) * (0.5 + oxygen * 0.8) * (filterOn ? 1.15 : 1) * dt;
   for (const p of plants) {
     const maxH = p.baseH * (1.1 + nutrients * 0.55 + oxygen * 0.2);
     if (p.health > 0.2) {
       p.h = Math.min(maxH, p.h + grow * p.health);
-      // plants clean water + produce oxygen (day much more)
       waterQuality = Math.min(1, waterQuality + p.h * 0.005 * dt);
       nutrients = Math.max(0, nutrients - p.h * 0.01 * dt);
-      const o2prod = p.h * p.health * (isNight ? 0.008 : 0.045) * dt;
-      oxygen = Math.min(1, oxygen + o2prod);
+      oxygen = Math.min(1, oxygen + p.h * p.health * (isNight ? 0.008 : 0.045) * dt);
     }
-    totalH += p.h;
     if (waterQuality < 0.35 || oxygen < 0.25)
       p.health = Math.max(0.12, p.health - 0.025 * dt);
     else
       p.health = Math.min(1, p.health + 0.012 * dt);
   }
-  return totalH;
 }
-
-function drawPlant(x, baseY, h, hueA, sway) {
-  const blades = 5;
-  for (let b = 0; b < blades; b++) {
-    const off = (b - blades / 2) * 6;
-    ctx.beginPath();
-    ctx.moveTo(x + off, baseY);
-    const midX = x + off + Math.sin(t * 1.1 + b + sway) * 10;
-    const tipX = x + off + Math.sin(t * 1.1 + b + sway + 1) * 16;
-    ctx.quadraticCurveTo(midX, baseY - h * 0.55, tipX, baseY - h);
-    ctx.lineWidth = 5 - b * 0.4;
-    ctx.strokeStyle = hueA;
-    ctx.lineCap = "round";
-    ctx.stroke();
-  }
-}
-
 function drawPlants() {
   const fy = floorY();
   for (const p of plants) {
     const hue = isNight
       ? (p.health > 0.5 ? "#1f5c3a" : "#1a3d28")
       : (p.health > 0.5 ? "#2e9c56" : "#4a7a40");
-    drawPlant(W * p.xFrac, fy + 4, H * p.h, hue, p.sway);
+    const x = W * p.xFrac, h = H * p.h;
+    for (let b = 0; b < 5; b++) {
+      const off = (b - 2.5) * 6;
+      ctx.beginPath();
+      ctx.moveTo(x + off, fy + 4);
+      ctx.quadraticCurveTo(
+        x + off + Math.sin(t * 1.1 + b + p.sway) * 10, fy + 4 - h * 0.55,
+        x + off + Math.sin(t * 1.1 + b + p.sway + 1) * 16, fy + 4 - h
+      );
+      ctx.lineWidth = 5 - b * 0.4;
+      ctx.strokeStyle = hue;
+      ctx.lineCap = "round";
+      ctx.stroke();
+    }
   }
 }
-
 function trimPlants() {
   for (const p of plants) {
     if (p.h > p.baseH * 0.7) {
       p.h *= 0.65;
-      // cuttings become a bit of food nutrients / slight pollution
       nutrients = Math.min(1, nutrients + 0.05);
     }
   }
   playBlip(400);
 }
 
-/* ========== BUBBLES ========== */
-const MAX_BUBBLES = 40;
+/* —— bubbles —— */
 let bubbles = [];
-function spawnBubble() {
+function spawnBubble(x, y) {
   if (bubbles.length >= MAX_BUBBLES) return;
-  bubbles.push({
-    x: W * 0.5 + rand(-4, 4),
-    y: floorY() - 2,
-    r: rand(1.5, 3.5),
-    vy: rand(28, 46),
-    drift: rand(-6, 6)
-  });
+  bubbles.push({ x: x + rand(-4, 4), y, r: rand(1.5, 3.5), vy: rand(28, 46), drift: rand(-6, 6) });
 }
 function updateBubbles(dt) {
-  if (Math.random() < 0.28) spawnBubble();
-  // filter outlet bubbles (bottom-left when on)
-  if (filterOn && Math.random() < 0.45 && bubbles.length < MAX_BUBBLES) {
-    bubbles.push({
-      x: W * 0.12 + rand(-6, 6),
-      y: floorY() - 4,
-      r: rand(1.2, 2.8),
-      vy: rand(32, 55),
-      drift: rand(-8, 8)
-    });
-  }
+  if (Math.random() < 0.28) spawnBubble(W * 0.5, floorY() - 2);
+  if (filterOn && Math.random() < 0.45) spawnBubble(W * 0.12, floorY() - 4);
   const sy = surfaceY();
   let w = 0;
   for (let i = 0; i < bubbles.length; i++) {
@@ -472,21 +407,15 @@ function updateBubbles(dt) {
 }
 function drawBubbles() {
   ctx.fillStyle = isNight ? "rgba(200,230,255,.35)" : "rgba(255,255,255,.55)";
-  for (let i = 0; i < bubbles.length; i++) {
-    const b = bubbles[i];
-    ctx.beginPath();
-    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-    ctx.fill();
+  for (const b of bubbles) {
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
   }
 }
 
-/* ========== FOOD ========== */
+/* —— food —— */
 let foods = [];
 function dropFood(x, y) {
-  foods.push({
-    x, y: Math.max(y, surfaceY() + 6), vy: 10,
-    eaten: false, r: 3.5, age: 0
-  });
+  foods.push({ x, y: Math.max(y, surfaceY() + 6), vy: 10, eaten: false, r: 3.5, age: 0, corpse: false });
 }
 function updateFood(dt) {
   const fy = floorY();
@@ -497,11 +426,10 @@ function updateFood(dt) {
     if (f.y < fy - 6) f.y += f.vy * dt;
     else {
       f.age += dt;
-      // uneaten food on floor → pollution + nutrients
       if (f.age > 12) {
         waterQuality = Math.max(0, waterQuality - 0.04);
         nutrients = Math.min(1, nutrients + 0.06);
-        continue; // remove as waste
+        continue;
       }
     }
     foods[w++] = f;
@@ -509,64 +437,53 @@ function updateFood(dt) {
   foods.length = w;
 }
 function drawFood() {
-  for (let i = 0; i < foods.length; i++) {
-    const f = foods[i];
-    // aging food looks darker
-    const a = Math.min(1, f.age / 12);
-    ctx.fillStyle = a > 0.5 ? "#8a6a3a" : "#c98a3b";
-    ctx.beginPath();
-    ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
-    ctx.fill();
+  for (const f of foods) {
+    ctx.fillStyle = f.corpse ? "#8a6a4a" : (f.age > 6 ? "#8a6a3a" : "#c98a3b");
+    ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2); ctx.fill();
   }
 }
 
-/* ========== EGGS ========== */
+/* —— eggs / genetics —— */
+const PALETTES = [
+  { light: "#ffb84d", dark: "#ff7a2e" },
+  { light: "#ffcf6b", dark: "#ff9a3d", patch: "rgba(255,255,255,.55)" },
+  { light: "#ff9d6b", dark: "#e85a2e" },
+  { light: "#ff6b9d", dark: "#e02060", patch: "rgba(255,255,255,.4)" },
+  { light: "#7ec8ff", dark: "#2a6fc0" },
+  { light: "#ffe566", dark: "#e0a020", patch: "rgba(40,30,20,.35)" },
+  { light: "#ff8c42", dark: "#c04010", patch: "rgba(255,220,100,.45)" },
+  { light: "#e0b0ff", dark: "#8a40c0" }
+];
 let eggs = [];
-/** Mix two parent palettes → hybrid offspring colors. */
+
+function mixHex(h1, h2, bias) {
+  const p = parseInt(h1.slice(1), 16), q = parseInt(h2.slice(1), 16);
+  const u = bias != null ? bias : rand(0.35, 0.65);
+  const r = ((p >> 16) & 255) * (1 - u) + ((q >> 16) & 255) * u;
+  const g = ((p >> 8) & 255) * (1 - u) + ((q >> 8) & 255) * u;
+  const bl = (p & 255) * (1 - u) + (q & 255) * u;
+  return `#${((r | 0) << 16 | (g | 0) << 8 | (bl | 0)).toString(16).padStart(6, "0")}`;
+}
 function mixHue(a, b) {
-  const mixHex = (h1, h2, bias) => {
-    const p = parseInt(h1.slice(1), 16), q = parseInt(h2.slice(1), 16);
-    const t = bias != null ? bias : rand(0.35, 0.65);
-    const r = ((p >> 16) & 255) * (1 - t) + ((q >> 16) & 255) * t;
-    const g = ((p >> 8) & 255) * (1 - t) + ((q >> 8) & 255) * t;
-    const bl = (p & 255) * (1 - t) + (q & 255) * t;
-    return `#${((r | 0) << 16 | (g | 0) << 8 | (bl | 0)).toString(16).padStart(6, "0")}`;
-  };
-  const hue = {
-    light: mixHex(a.light, b.light),
-    dark: mixHex(a.dark, b.dark)
-  };
-  // calico patch chance if either parent has it, or random hybrid splash
+  const hue = { light: mixHex(a.light, b.light), dark: mixHex(a.dark, b.dark) };
   if (a.patch || b.patch || Math.random() < 0.35) {
     const patches = ["rgba(255,255,255,.55)", "rgba(40,30,20,.4)", "rgba(220,60,40,.35)", "rgba(255,200,80,.4)"];
-    hue.patch = a.patch && b.patch && Math.random() < 0.5 ? a.patch
-      : patches[Math.floor(Math.random() * patches.length)];
+    hue.patch = patches[Math.floor(Math.random() * patches.length)];
   }
-  // occasional vivid mutation
   if (Math.random() < 0.12) {
-    const mut = [
-      { light: "#ff6b9d", dark: "#e02060" },
-      { light: "#7ec8ff", dark: "#2a6fc0" },
-      { light: "#b8f05a", dark: "#5a9a20" },
-      { light: "#e0b0ff", dark: "#8a40c0" }
-    ];
-    const m = mut[Math.floor(Math.random() * mut.length)];
+    const m = PALETTES[3 + Math.floor(Math.random() * 5)];
     hue.light = mixHex(hue.light, m.light, 0.55);
     hue.dark = mixHex(hue.dark, m.dark, 0.55);
   }
   return hue;
 }
-
 function layEgg(x, y, hueA, hueB) {
   if (eggs.length >= MAX_EGGS) return;
   eggs.push({
     x: x + rand(-8, 8),
     y: clamp(y + rand(-4, 4), surfaceY() + 20, floorY() - 20),
-    age: 0,
-    hatchIn: rand(9, 14),
-    alive: true,
-    hueA: hueA || PALETTES[0],
-    hueB: hueB || PALETTES[1]
+    age: 0, hatchIn: rand(9, 14), alive: true,
+    hueA: hueA || PALETTES[0], hueB: hueB || PALETTES[1]
   });
 }
 function updateEggs(dt) {
@@ -576,14 +493,12 @@ function updateEggs(dt) {
     if (!e.alive) continue;
     e.age += dt;
     if (waterQuality < 0.25 && Math.random() < 0.15 * dt) {
-      e.alive = false;
       nutrients = Math.min(1, nutrients + 0.02);
       continue;
     }
     if (e.age >= e.hatchIn) {
       if (fishes.length < MAX_FISH && waterQuality > 0.3) {
-        const hybrid = mixHue(e.hueA, e.hueB);
-        const baby = new Goldfish(hybrid, "baby");
+        const baby = new Goldfish(mixHue(e.hueA, e.hueB), "baby");
         baby.x = e.x; baby.y = e.y;
         fishes.push(baby);
       }
@@ -594,20 +509,15 @@ function updateEggs(dt) {
   eggs.length = w;
 }
 function drawEggs() {
-  for (let i = 0; i < eggs.length; i++) {
-    const e = eggs[i];
+  for (const e of eggs) {
     const pulse = 0.7 + Math.sin(t * 4 + e.x) * 0.15;
-    ctx.fillStyle = `rgba(255, 230, 180, ${pulse})`;
-    ctx.beginPath();
-    ctx.ellipse(e.x, e.y, 3.5, 4.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "rgba(200,160,80,0.5)";
-    ctx.lineWidth = 1;
-    ctx.stroke();
+    ctx.fillStyle = `rgba(255,230,180,${pulse})`;
+    ctx.beginPath(); ctx.ellipse(e.x, e.y, 3.5, 4.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "rgba(200,160,80,0.5)"; ctx.lineWidth = 1; ctx.stroke();
   }
 }
 
-/* ========== GOLDFISH ========== */
+/* —— goldfish —— */
 class Goldfish {
   constructor(hue, stage = "adult") {
     this.x = rand(W * 0.2, W * 0.8);
@@ -619,20 +529,16 @@ class Goldfish {
     this.size = stage === "baby" ? rand(0.35, 0.5) : rand(0.85, 1.15);
     this.retarget = 0;
     this.tx = this.x; this.ty = this.y;
-    this.fleeing = false;
-    this.hiding = false;
-    this.hideTime = 0; // seconds spent continuous in deep cover without feeding
-    this.stage = stage; // baby | adult
+    this.fleeing = false; this.hiding = false; this.hideTime = 0;
+    this.stage = stage;
     this.age = stage === "baby" ? 0 : rand(20, 60);
-    this.hunger = stage === "baby" ? 0.4 : rand(0.3, 0.6); // 0 empty .. 1 full
+    this.hunger = stage === "baby" ? 0.4 : rand(0.3, 0.6);
     this.breedCD = rand(8, 18);
-    this.mealsEaten = 0; // cumulative pellets → armor
-    this.armor = 0;      // 0..1  plated scales after heavy feeding
+    this.mealsEaten = 0; this.armor = 0;
     this.alive = true;
   }
   pickTarget() {
     const margin = 40;
-    // armored adults patrol near fry to shield them
     if (this.stage === "adult" && this.armor >= 0.4) {
       const fry = fishes.find(f => f.alive && f.stage === "baby");
       if (fry) {
@@ -642,7 +548,7 @@ class Goldfish {
         return;
       }
     }
-    if (this.hunger > 0.55 && this.stage === "baby" && plants.length) {
+    if (this.hunger > 0.55 && this.stage === "baby") {
       const p = plants[Math.floor(Math.random() * plants.length)];
       this.tx = clamp(W * p.xFrac + rand(-20, 20), margin, W - margin);
       this.ty = clamp(floorY() - H * p.h * 0.4 + rand(-15, 15), surfaceY() + 20, floorY() - 14);
@@ -652,31 +558,19 @@ class Goldfish {
     }
     this.retarget = rand(2.5, 5);
   }
-  /** Dash into densest plant cover when turtle is near. */
   fleeFromTurtle() {
-    if (!turtle || !this.alive) return false;
-    // turtle full or basking → peaceful, fish don't panic
-    if (turtle.peaceful) return false;
+    if (!turtle || !this.alive || turtle.peaceful) return false;
     const d = Math.hypot(turtle.x - this.x, turtle.y - this.y);
     const scareR = turtle.chasingFood || turtle.eatTimer > 0
       ? (this.stage === "baby" ? 110 : 90)
       : (this.stage === "baby" ? 75 : 55);
     if (d > scareR) return false;
-
-    // always prefer plant sanctuary when available
-    let bestP = null, bestScore = -1;
+    let bestP = plants[0], bestScore = -1;
     for (const p of plants) {
-      const score = p.h * p.health;
-      if (score > bestScore) { bestScore = score; bestP = p; }
+      if (p.h * p.health > bestScore) { bestScore = p.h * p.health; bestP = p; }
     }
-    if (bestP && bestScore > 0.05) {
-      this.tx = clamp(W * bestP.xFrac + rand(-12, 12), 30, W - 30);
-      this.ty = clamp(floorY() - H * bestP.h * 0.5 + rand(-8, 8), surfaceY() + 18, floorY() - 12);
-    } else {
-      const ang = Math.atan2(this.y - turtle.y, this.x - turtle.x);
-      this.tx = clamp(this.x + Math.cos(ang) * 80, 30, W - 30);
-      this.ty = clamp(this.y + Math.sin(ang) * 50, surfaceY() + 20, floorY() - 14);
-    }
+    this.tx = clamp(W * bestP.xFrac + rand(-12, 12), 30, W - 30);
+    this.ty = clamp(floorY() - H * bestP.h * 0.5 + rand(-8, 8), surfaceY() + 18, floorY() - 12);
     this.fleeing = true;
     this.retarget = 0.9;
     return true;
@@ -684,8 +578,7 @@ class Goldfish {
   tryBreed() {
     if (this.stage !== "adult" || this.breedCD > 0) return;
     if (this.hunger < 0.35 || this.hunger > 0.85) return;
-    if (waterQuality < 0.45) return;
-    if (oxygen < 0.4) return;
+    if (waterQuality < 0.45 || oxygen < 0.4) return;
     if (fishes.filter(f => f.alive && f.stage === "adult").length < 2) return;
     if (eggs.length >= MAX_EGGS) return;
     let partner = null;
@@ -695,101 +588,85 @@ class Goldfish {
       if (Math.hypot(o.x - this.x, o.y - this.y) < 50) { partner = o; break; }
     }
     if (!partner) return;
-    let lx = this.x, ly = this.y;
-    if (plants.length) {
-      const p = plants[Math.floor(Math.random() * plants.length)];
-      lx = W * p.xFrac + rand(-15, 15);
-      ly = floorY() - H * p.h * 0.35;
-    }
-    // peace window (turtle basking or full): faster multi-clutch breeding
-    const peace = turtle && (turtle.state === "surfaced" || turtle.peaceful);
+    const p = plants[Math.floor(Math.random() * plants.length)];
+    const lx = W * p.xFrac + rand(-15, 15);
+    const ly = floorY() - H * p.h * 0.35;
+    const peace = turtle && turtle.peaceful;
     const n = peace ? (2 + (Math.random() < 0.5 ? 1 : 0)) : (1 + (Math.random() < 0.4 ? 1 : 0));
     for (let i = 0; i < n; i++) layEgg(lx, ly, this.hue, partner.hue);
     this.breedCD = peace ? rand(6, 12) : rand(20, 35);
     partner.breedCD = peace ? rand(6, 12) : rand(20, 35);
     playBlip(520);
   }
+  stressLevel() {
+    let s = 0;
+    if (this.hunger < 0.35) s += (0.35 - this.hunger) * 1.4;
+    if (this.hunger < 0.15) s += 0.25;
+    if (waterQuality < 0.45) s += (0.45 - waterQuality) * 0.9;
+    if (oxygen < 0.4) s += (0.4 - oxygen) * 1.1;
+    if (this.hideTime > 6) s += Math.min(0.35, (this.hideTime - 6) * 0.03);
+    if (this.fleeing) s += 0.35;
+    return clamp(s, 0, 1);
+  }
   update(dt) {
     if (!this.alive) return;
     this.age += dt;
     this.breedCD -= dt;
-
-    // cover status
     const cover = plantCoverAt(this.x, this.y);
     this.hiding = cover > 0.35;
-    if (this.hiding) this.hideTime += dt;
-    else this.hideTime = Math.max(0, this.hideTime - dt * 0.5);
+    this.hideTime = this.hiding ? this.hideTime + dt : Math.max(0, this.hideTime - dt * 0.5);
 
-    // hunger: drains faster when chronically hiding (can't forage)
-    let hungerDrain = this.stage === "baby" ? 0.035 : 0.018;
-    if (this.hideTime > 6) hungerDrain *= 1.35; // long hide → starve risk
-    if (this.hideTime > 14) hungerDrain *= 1.5;
-    if (oxygen < 0.3) hungerDrain *= 1.25; // gasping costs energy
-    this.hunger = Math.max(0, this.hunger - dt * hungerDrain);
+    const isAdult = this.stage === "adult";
+    let drain = isAdult ? 0.010 : 0.032;
+    if (this.hideTime > 8) drain *= isAdult ? 1.15 : 1.4;
+    if (this.hideTime > 16) drain *= isAdult ? 1.1 : 1.4;
+    if (oxygen < 0.3) drain *= isAdult ? 1.1 : 1.3;
+    this.hunger = Math.max(0, this.hunger - dt * drain);
+    oxygen = Math.max(0, oxygen - (isAdult ? 0.0045 : 0.004) * dt);
 
-    // consume oxygen
-    oxygen = Math.max(0, oxygen - (this.stage === "baby" ? 0.004 : 0.007) * dt);
-
-    // grow up (faster with good O2)
-    const growAge = oxygen > 0.55 ? 16 : 20;
-    if (this.stage === "baby" && this.age > growAge) {
+    if (!isAdult && this.age > (oxygen > 0.55 ? 16 : 20)) {
       this.stage = "adult";
       this.size = rand(0.85, 1.1);
       this.speed = rand(24, 34);
     }
-    // armor slowly wears if underfed
-    if (this.armor > 0 && this.hunger < 0.35)
-      this.armor = Math.max(0, this.armor - 0.015 * dt);
+    if (this.armor > 0 && this.hunger < 0.35) this.armor = Math.max(0, this.armor - 0.015 * dt);
 
-    // death: starvation, foul water, or anoxia
-    if (this.hunger <= 0 && Math.random() < 0.1 * dt) { this.die("starve"); return; }
-    if (waterQuality < 0.12 && Math.random() < 0.12 * dt) { this.die("water"); return; }
-    if (oxygen < 0.08 && Math.random() < 0.15 * dt) { this.die("oxygen"); return; }
-    if (waterQuality < 0.28) this.hunger = Math.max(0, this.hunger - 0.01 * dt);
+    if (this.hunger <= 0 && Math.random() < (isAdult ? 0.025 : 0.1) * dt) { this.die(); return; }
+    if (waterQuality < (isAdult ? 0.06 : 0.12) && Math.random() < (isAdult ? 0.03 : 0.12) * dt) { this.die(); return; }
+    if (oxygen < (isAdult ? 0.04 : 0.08) && Math.random() < (isAdult ? 0.04 : 0.15) * dt) { this.die(); return; }
+    if (waterQuality < 0.28) this.hunger = Math.max(0, this.hunger - (isAdult ? 0.004 : 0.01) * dt);
 
     this.retarget -= dt;
     this.fleeing = false;
-
-    // priority: flee turtle into plants (even if hungry — fear wins short-term)
     if (this.fleeFromTurtle()) {
-      // while fleeing, cannot eat
+      /* fear blocks foraging */
     } else if (this.hunger < 0.85) {
-      // leave cover to eat if hungry enough
       let target = null, best = Infinity;
       for (const f of foods) {
         if (f.eaten) continue;
-        if (turtle) {
-          const td = Math.hypot(f.x - turtle.x, f.y - turtle.y);
-          if (td < 70) continue; // yield to turtle
-        }
+        if (turtle && Math.hypot(f.x - turtle.x, f.y - turtle.y) < 70) continue;
         const d = Math.hypot(f.x - this.x, f.y - this.y);
         if (d < best) { best = d; target = f; }
       }
       if (target) {
         this.tx = target.x; this.ty = target.y;
-        if (best < (this.stage === "baby" ? 6 : 8)) {
+        if (best < (isAdult ? 8 : 6)) {
           target.eaten = true;
           this.hunger = Math.min(1, this.hunger + 0.35);
           this.hideTime = 0;
-          // heavy feeding builds scale armor (adults only)
-          if (this.stage === "adult") {
-            this.mealsEaten += 1;
+          if (isAdult) {
+            this.mealsEaten++;
             this.armor = Math.min(1, this.armor + 0.18);
           }
         }
-      } else if (this.retarget <= 0) {
-        this.pickTarget();
-      }
-    } else if (this.retarget <= 0) {
-      this.pickTarget();
-    }
+      } else if (this.retarget <= 0) this.pickTarget();
+    } else if (this.retarget <= 0) this.pickTarget();
 
     this.tryBreed();
 
     const dx = this.tx - this.x, dy = this.ty - this.y;
     const dist = Math.hypot(dx, dy) || 1;
-    const wantDir = Math.atan2(dy, dx);
-    let diff = wantDir - this.dir;
+    let diff = Math.atan2(dy, dx) - this.dir;
     while (diff > Math.PI) diff -= Math.PI * 2;
     while (diff < -Math.PI) diff += Math.PI * 2;
     this.dir += diff * Math.min(1, dt * (this.fleeing ? 4.8 : 2.2));
@@ -799,46 +676,41 @@ class Goldfish {
     else if (this.hunger < 0.85 && foods.some(f => !f.eaten)) speed *= 1.15;
     if (waterQuality < 0.3) speed *= 0.75;
     if (oxygen < 0.25) speed *= 0.7;
-    if (this.hiding && !this.fleeing) speed *= 0.75; // cautious in weeds
+    if (this.hiding && !this.fleeing) speed *= 0.75;
     const step = Math.min(speed * dt, dist);
-    this.x += Math.cos(this.dir) * step;
-    this.y += Math.sin(this.dir) * step;
-    this.x = clamp(this.x, 20, W - 20);
-    this.y = clamp(this.y, surfaceY() + 16, floorY() - 10);
+    this.x = clamp(this.x + Math.cos(this.dir) * step, 20, W - 20);
+    this.y = clamp(this.y + Math.sin(this.dir) * step, surfaceY() + 16, floorY() - 10);
     this.wiggle += dt * (6 + speed * 0.15);
-
     if (this.hunger > 0.5) {
       waterQuality = Math.max(0, waterQuality - 0.0015 * dt);
       nutrients = Math.min(1, nutrients + 0.002 * dt);
     }
   }
-  die(reason) {
+  die() {
     this.alive = false;
-    waterQuality = Math.max(0, waterQuality - 0.06);
-    nutrients = Math.min(1, nutrients + 0.08);
-    oxygen = Math.max(0, oxygen - 0.04);
-    // corpse → turtle can scavenge
-    foods.push({
-      x: this.x, y: this.y, vy: 8, eaten: false,
-      r: reason === "starve" ? 4.2 : 4.5,
-      age: 0, corpse: true
-    });
+    const impact = this.stage === "adult" ? 0.035 : 0.05;
+    waterQuality = Math.max(0, waterQuality - impact);
+    nutrients = Math.min(1, nutrients + impact * 1.2);
+    oxygen = Math.max(0, oxygen - impact * 0.6);
+    foods.push({ x: this.x, y: this.y, vy: 8, eaten: false, r: 4.5, age: 0, corpse: true });
   }
   draw() {
     if (!this.alive) return;
     const s = 15 * this.size;
+    const stress = this.stressLevel();
+    const sick = stress > 0.35 || waterQuality < 0.3 || this.hunger < 0.15;
+    const gasp = oxygen < 0.35 || stress > 0.55;
+    const starving = this.hunger < 0.2;
+
     ctx.save();
     ctx.translate(this.x, this.y);
     const flip = Math.cos(this.dir) < 0;
     ctx.scale(flip ? -1 : 1, 1);
-    ctx.rotate(Math.sin(this.wiggle) * 0.06);
+    ctx.rotate(Math.sin(this.wiggle) * (0.06 + stress * 0.08));
 
-    // sick tint when water bad or starving
-    const sick = waterQuality < 0.3 || this.hunger < 0.15;
     const bodyGrad = ctx.createLinearGradient(-s, 0, s, 0);
     bodyGrad.addColorStop(0, sick ? "#a08040" : this.hue.dark);
     bodyGrad.addColorStop(1, sick ? "#c0a060" : this.hue.light);
-
     const tailWag = Math.sin(this.wiggle * 1.6) * 0.5;
     ctx.fillStyle = sick ? "#c0a060" : this.hue.light;
     ctx.beginPath();
@@ -846,88 +718,93 @@ class Goldfish {
     ctx.quadraticCurveTo(-s * 1.6, -s * 0.9 + tailWag * s * 0.4, -s * 2.1, tailWag * s * 0.9);
     ctx.quadraticCurveTo(-s * 1.6, s * 0.9 + tailWag * s * 0.4, -s * 0.9, 0);
     ctx.fill();
-
     ctx.fillStyle = bodyGrad;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, s * 0.95, s * 0.72, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // scale armor plates after heavy feeding
+    ctx.beginPath(); ctx.ellipse(0, 0, s * 0.95, s * 0.72, 0, 0, Math.PI * 2); ctx.fill();
+    if (stress > 0.25) {
+      ctx.fillStyle = `rgba(180,90,40,${stress * 0.22})`;
+      ctx.beginPath(); ctx.ellipse(0, 0, s * 0.95, s * 0.72, 0, 0, Math.PI * 2); ctx.fill();
+    }
     if (this.armor > 0.15 && this.stage === "adult") {
       const a = this.armor;
-      ctx.strokeStyle = `rgba(220, 200, 120, ${0.35 + a * 0.5})`;
+      ctx.strokeStyle = `rgba(220,200,120,${0.35 + a * 0.5})`;
       ctx.lineWidth = 1.2 + a;
-      ctx.beginPath();
-      ctx.ellipse(0, 0, s * 0.98, s * 0.75, 0, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.fillStyle = `rgba(255, 230, 150, ${0.12 + a * 0.25})`;
-      for (let i = -1; i <= 1; i++) {
-        for (let j = -1; j <= 1; j++) {
-          if (i === 0 && j === 0) continue;
-          ctx.beginPath();
-          ctx.ellipse(i * s * 0.35, j * s * 0.28, s * 0.16, s * 0.12, 0.2, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.strokeStyle = `rgba(180, 150, 60, ${0.3 + a * 0.4})`;
-          ctx.lineWidth = 0.8;
-          ctx.stroke();
-        }
+      ctx.beginPath(); ctx.ellipse(0, 0, s * 0.98, s * 0.75, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = `rgba(255,230,150,${0.12 + a * 0.25})`;
+      for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) {
+        if (!i && !j) continue;
+        ctx.beginPath(); ctx.ellipse(i * s * 0.35, j * s * 0.28, s * 0.16, s * 0.12, 0.2, 0, Math.PI * 2); ctx.fill();
       }
     }
-
     if (this.hue.patch && this.stage === "adult") {
       ctx.fillStyle = this.hue.patch;
       ctx.beginPath(); ctx.ellipse(-s * 0.2, -s * 0.2, s * 0.3, s * 0.22, 0.3, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.ellipse(s * 0.3, s * 0.15, s * 0.22, s * 0.16, -0.4, 0, Math.PI * 2); ctx.fill();
     }
-
     ctx.fillStyle = sick ? "#c0a060" : this.hue.light;
     ctx.beginPath();
     ctx.moveTo(-s * 0.1, -s * 0.6);
     ctx.quadraticCurveTo(s * 0.1, -s * 1.15, s * 0.35, -s * 0.55);
     ctx.quadraticCurveTo(s * 0.05, -s * 0.7, -s * 0.1, -s * 0.6);
     ctx.fill();
-
     const finWag = Math.sin(this.wiggle * 2.2) * 0.3 + 0.3;
     ctx.beginPath();
     ctx.ellipse(s * 0.05, s * 0.55, s * 0.32, s * 0.16, 0.9 + finWag, 0, Math.PI * 2);
     ctx.fill();
-
-    // telescope (bug) eyes — larger & more bulging on adults
     for (const side of [-1, 1]) {
       const ex = s * (this.stage === "baby" ? 0.5 : 0.58);
       const ey = side * s * (this.stage === "baby" ? 0.28 : 0.34);
       const er = this.stage === "baby" ? s * 0.18 : s * 0.30;
-      ctx.fillStyle = "rgba(0,0,0,.12)";
-      ctx.beginPath(); ctx.ellipse(ex + 1, ey + 1, er, er, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = "#fff8ec";
+      ctx.fillStyle = sick ? "#f0e8d0" : "#fff8ec";
       ctx.beginPath(); ctx.arc(ex, ey, er, 0, Math.PI * 2); ctx.fill();
+      const pr = er * (this.fleeing ? 0.62 : (starving ? 0.35 : 0.52));
       ctx.fillStyle = "#191410";
-      ctx.beginPath(); ctx.arc(ex + er * 0.25, ey, er * 0.52, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = "rgba(255,255,255,.85)";
-      ctx.beginPath(); ctx.arc(ex + er * 0.05, ey - er * 0.28, er * 0.18, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(ex + er * 0.25, ey, pr, 0, Math.PI * 2); ctx.fill();
     }
-
+    if (gasp) {
+      for (let i = 0; i < 1 + (stress > 0.7 ? 1 : 0); i++) {
+        const bx = s * 0.95 + Math.sin(t * 5 + i * 2) * 3;
+        const by = -s * 0.15 - ((t * 28 + i * 12) % 22);
+        ctx.strokeStyle = `rgba(200,230,255,${0.45 + stress * 0.4})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(bx, by, 1.2 + i * 0.6, 0, Math.PI * 2); ctx.stroke();
+      }
+    }
     ctx.restore();
+
+    if (stress > 0.4) {
+      const ix = this.x, iy = this.y - s * 1.35 - 4;
+      const pulse = 0.65 + Math.sin(t * 6 + this.x) * 0.35;
+      ctx.save();
+      ctx.globalAlpha = 0.55 + stress * 0.45;
+      ctx.font = `bold ${Math.max(9, s * 0.55)}px sans-serif`;
+      ctx.textAlign = "center";
+      if (starving) { ctx.fillStyle = `rgba(220,80,40,${pulse})`; ctx.fillText("饿", ix, iy); }
+      else if (oxygen < 0.3) { ctx.fillStyle = `rgba(80,160,220,${pulse})`; ctx.fillText("氧", ix, iy); }
+      else if (waterQuality < 0.3) { ctx.fillStyle = `rgba(180,140,40,${pulse})`; ctx.fillText("水", ix, iy); }
+      else if (this.fleeing || this.hideTime > 8) {
+        ctx.fillStyle = `rgba(255,200,60,${pulse})`;
+        ctx.font = `bold ${Math.max(11, s * 0.65)}px sans-serif`;
+        ctx.fillText("!", ix, iy);
+      } else {
+        ctx.fillStyle = "rgba(0,0,0,.35)"; ctx.fillRect(ix - 7, iy - 2, 14, 3);
+        ctx.fillStyle = stress > 0.7 ? "#e05030" : "#e0a020";
+        ctx.fillRect(ix - 7, iy - 2, 14 * stress, 3);
+      }
+      ctx.restore();
+    }
   }
 }
 
-/* ========== TURTLE ========== */
+/* —— turtle —— */
 class Turtle {
   constructor() {
     this.x = W * 0.3; this.y = floorY() - 20;
-    this.dir = 0;
-    this.speed = 24;
-    this.legPhase = 0;
-    this.state = "swim";
-    this.stateTimer = rand(6, 12);
+    this.dir = 0; this.speed = 24; this.legPhase = 0;
+    this.state = "swim"; this.stateTimer = rand(6, 12);
     this.tx = this.x; this.ty = this.y;
-    this.chasingFood = false;
-    this.eatTimer = 0;
-    this.belly = 0;
-    this.digestTimer = 0;
-    this.meals = 0;
-    this.baskNeed = rand(18, 28); // must bask when this hits 0
-    this.peaceful = false;        // full + digesting → leave fish alone
+    this.chasingFood = false; this.eatTimer = 0;
+    this.belly = 0; this.digestTimer = 0; this.meals = 0;
+    this.baskNeed = rand(18, 28); this.peaceful = false;
     this.pickTarget();
   }
   pickTarget() {
@@ -935,19 +812,14 @@ class Turtle {
     this.ty = rand(floorY() - 50, floorY() - 10);
   }
   findPrey() {
-    // priority: food/corpse > eggs > exposed baby fish
-    // adults never; babies deep in plants are untouchable
     let best = null, bestD = Infinity, kind = null;
     for (const f of foods) {
       if (f.eaten) continue;
-      const d = Math.hypot(f.x - this.x, f.y - this.y);
-      // prefer corpses slightly
-      const bias = f.corpse ? -8 : 0;
-      if (d + bias < bestD) { bestD = d + bias; best = f; kind = "food"; }
+      const d = Math.hypot(f.x - this.x, f.y - this.y) + (f.corpse ? -8 : 0);
+      if (d < bestD) { bestD = d; best = f; kind = "food"; }
     }
     for (const e of eggs) {
       if (!e.alive) continue;
-      // eggs in dense cover harder to find
       const cover = plantCoverAt(e.x, e.y);
       if (cover > 0.55) continue;
       const d = Math.hypot(e.x - this.x, e.y - this.y) + cover * 50;
@@ -956,13 +828,12 @@ class Turtle {
     for (const f of fishes) {
       if (!f.alive || f.stage !== "baby") continue;
       const cover = plantCoverAt(f.x, f.y);
-      // fully hidden in weeds → turtle cannot reach
       if (cover > 0.5 || f.hiding) continue;
-      // armored adults nearby shield fry (block turtle)
       let shielded = false;
       for (const a of fishes) {
-        if (!a.alive || a.stage !== "adult" || a.armor < 0.4) continue;
-        if (Math.hypot(a.x - f.x, a.y - f.y) < 55) { shielded = true; break; }
+        if (a.alive && a.stage === "adult" && a.armor >= 0.4 && Math.hypot(a.x - f.x, a.y - f.y) < 55) {
+          shielded = true; break;
+        }
       }
       if (shielded) continue;
       const d = Math.hypot(f.x - this.x, f.y - this.y) + cover * 60;
@@ -975,9 +846,8 @@ class Turtle {
     else if (kind === "egg") target.alive = false;
     else if (kind === "baby") target.die();
     this.eatTimer = 0.55;
-    this.meals += 1;
-    const fill = kind === "baby" ? 0.4 : (kind === "egg" ? 0.15 : 0.28);
-    this.belly = Math.min(1, this.belly + fill);
+    this.meals++;
+    this.belly = Math.min(1, this.belly + (kind === "baby" ? 0.4 : kind === "egg" ? 0.15 : 0.28));
     this.digestTimer = Math.max(this.digestTimer, 8 + this.meals * 3);
     waterQuality = Math.max(0, waterQuality - 0.008);
     nutrients = Math.min(1, nutrients + 0.015);
@@ -986,7 +856,6 @@ class Turtle {
   update(dt) {
     this.stateTimer -= dt;
     if (this.eatTimer > 0) this.eatTimer -= dt;
-
     if (this.digestTimer > 0) {
       this.digestTimer -= dt;
       if (this.digestTimer <= 0) {
@@ -996,53 +865,32 @@ class Turtle {
         else { this.belly = 0; this.meals = 0; }
       }
     }
-
     const isFull = this.belly > 0.7;
-    const isHungry = this.belly < 0.35;
-    // must bask periodically; also peaceful while full
     this.baskNeed -= dt;
     this.peaceful = isFull || this.state === "surfaced" || this.state === "toSurface";
 
-    // forced bask trip when timer expires (cannot be skipped by hunting)
     if (this.baskNeed <= 0 && this.state === "swim") {
-      this.state = "toSurface";
-      this.stateTimer = 25;
-      this.chasingFood = false;
+      this.state = "toSurface"; this.stateTimer = 25; this.chasingFood = false;
     }
-
-    // only hunt when not peaceful and not forced to bask
     const found = (!this.peaceful && this.baskNeed > 0) ? this.findPrey() : null;
     this.chasingFood = false;
     if (found && this.state !== "surfaced" && this.eatTimer <= 0) {
-      if (this.state === "diving") {
-        this.state = "swim";
-        this.stateTimer = rand(3, 6);
-      }
+      if (this.state === "diving") { this.state = "swim"; this.stateTimer = rand(3, 6); }
       this.chasingFood = true;
-      this.tx = found.target.x;
-      this.ty = found.target.y;
-      const reach = found.kind === "baby" ? 22 : 26;
-      if (found.dist < reach) {
+      this.tx = found.target.x; this.ty = found.target.y;
+      if (found.dist < (found.kind === "baby" ? 22 : 26)) {
         this.eat(found.target, found.kind);
         this.chasingFood = false;
       }
     }
-
     if (!this.chasingFood && this.state === "swim") {
-      const dist = Math.hypot(this.tx - this.x, this.ty - this.y) || 1;
-      if (dist < 12 || this.stateTimer <= 0) {
-        if (this.baskNeed <= 5 || isFull) {
-          this.state = "toSurface";
-          this.stateTimer = 20;
-        } else {
-          this.pickTarget();
-          this.stateTimer = rand(4, 9);
-        }
+      if (Math.hypot(this.tx - this.x, this.ty - this.y) < 12 || this.stateTimer <= 0) {
+        if (this.baskNeed <= 5 || isFull) { this.state = "toSurface"; this.stateTimer = 20; }
+        else { this.pickTarget(); this.stateTimer = rand(4, 9); }
       }
     } else if (this.state === "toSurface") {
-      const px = W * 0.84, py = surfaceY() - 6;
-      this.tx = px; this.ty = py;
-      if (Math.hypot(px - this.x, py - this.y) < 10) {
+      this.tx = W * 0.84; this.ty = surfaceY() - 6;
+      if (Math.hypot(this.tx - this.x, this.ty - this.y) < 10) {
         this.state = "surfaced";
         this.stateTimer = isFull ? rand(8, 14) : rand(5, 9);
       }
@@ -1050,178 +898,93 @@ class Turtle {
       this.tx = this.x; this.ty = this.y;
       if (this.belly > 0) this.digestTimer = Math.max(0, this.digestTimer - dt * 0.5);
       if (this.stateTimer <= 0) {
-        this.state = "diving";
-        this.baskNeed = rand(20, 32); // reset mandatory bask clock
-        this.pickTarget();
-        this.stateTimer = 8;
+        this.state = "diving"; this.baskNeed = rand(20, 32);
+        this.pickTarget(); this.stateTimer = 8;
       }
     } else if (this.state === "diving") {
       if (Math.hypot(this.tx - this.x, this.ty - this.y) < 12) {
-        this.state = "swim";
-        this.stateTimer = rand(4, 9);
+        this.state = "swim"; this.stateTimer = rand(4, 9);
       }
     }
-
     if (this.state !== "surfaced") {
       const dx = this.tx - this.x, dy = this.ty - this.y;
       const dist = Math.hypot(dx, dy) || 1;
-      const wantDir = Math.atan2(dy, dx);
-      let diff = wantDir - this.dir;
+      let diff = Math.atan2(dy, dx) - this.dir;
       while (diff > Math.PI) diff -= Math.PI * 2;
       while (diff < -Math.PI) diff += Math.PI * 2;
-      const turnRate = this.chasingFood ? 3.4 : (isFull ? 1.1 : 1.6);
-      this.dir += diff * Math.min(1, dt * turnRate);
-      let speedMul = 1;
-      if (this.chasingFood) speedMul = 2.6;
-      else if (this.eatTimer > 0) speedMul = 0.35;
-      else if (isFull) speedMul = 0.55;
-      const speed = this.speed * speedMul;
-      const step = Math.min(speed * dt, dist);
-      this.x += Math.cos(this.dir) * step;
-      this.y += Math.sin(this.dir) * step;
-      this.legPhase += dt * (this.chasingFood ? 11 : (isFull ? 3 : 5));
-    } else {
-      this.legPhase += dt * 1.0;
-    }
-    this.x = clamp(this.x, 26, W - 26);
-    this.y = clamp(this.y, surfaceY() + 10, floorY() - 8);
+      this.dir += diff * Math.min(1, dt * (this.chasingFood ? 3.4 : isFull ? 1.1 : 1.6));
+      let mul = 1;
+      if (this.chasingFood) mul = 2.6;
+      else if (this.eatTimer > 0) mul = 0.35;
+      else if (isFull) mul = 0.55;
+      const step = Math.min(this.speed * mul * dt, dist);
+      this.x = clamp(this.x + Math.cos(this.dir) * step, 26, W - 26);
+      this.y = clamp(this.y + Math.sin(this.dir) * step, surfaceY() + 10, floorY() - 8);
+      this.legPhase += dt * (this.chasingFood ? 11 : isFull ? 3 : 5);
+    } else this.legPhase += dt;
   }
   draw() {
-    const bulk = 1 + this.belly * 0.12;
-    const s = 24 * bulk;
+    const s = 24 * (1 + this.belly * 0.12);
     ctx.save();
     ctx.translate(this.x, this.y);
-    const flip = Math.cos(this.dir) < 0;
-    ctx.scale(flip ? -1 : 1, 1);
-
+    ctx.scale(Math.cos(this.dir) < 0 ? -1 : 1, 1);
     ctx.fillStyle = "#3a6b32";
     for (let i = 0; i < 4; i++) {
-      const side = i < 2 ? -1 : 1;
-      const front = i % 2 === 0;
+      const side = i < 2 ? -1 : 1, front = i % 2 === 0;
       const phase = this.legPhase + (front ? 0 : Math.PI) + (side < 0 ? 0 : Math.PI);
-      const swing = Math.sin(phase) * 10;
-      const lx = (front ? s * 0.55 : -s * 0.5) + swing * 0.3;
+      const lx = (front ? s * 0.55 : -s * 0.5) + Math.sin(phase) * 3;
       const ly = side * s * 0.52 + Math.cos(phase) * 3.5;
-      ctx.beginPath();
-      ctx.ellipse(lx, ly, 10, 4.2, side * 0.45, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "#c9b45a";
-      ctx.beginPath();
-      ctx.arc(lx + 7, ly + side * 1.5, 1.4, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = "#3a6b32";
+      ctx.beginPath(); ctx.ellipse(lx, ly, 10, 4.2, side * 0.45, 0, Math.PI * 2); ctx.fill();
     }
-
-    const shellGrad = ctx.createRadialGradient(-s * 0.15, -s * 0.25, 2, 0, 0, s * 1.05);
-    shellGrad.addColorStop(0, "#6b8f3e");
-    shellGrad.addColorStop(0.45, "#4a6b32");
-    shellGrad.addColorStop(1, "#2d4520");
-    ctx.fillStyle = shellGrad;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, s, s * 0.68, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = "rgba(200, 180, 90, 0.45)";
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, s * 0.92, s * 0.60, 0, 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.strokeStyle = "rgba(20, 30, 10, 0.55)";
-    ctx.lineWidth = 1.15;
+    const g = ctx.createRadialGradient(-s * 0.15, -s * 0.25, 2, 0, 0, s * 1.05);
+    g.addColorStop(0, "#6b8f3e"); g.addColorStop(0.45, "#4a6b32"); g.addColorStop(1, "#2d4520");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.ellipse(0, 0, s, s * 0.68, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "rgba(200,180,90,0.45)"; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.ellipse(0, 0, s * 0.92, s * 0.60, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = "rgba(20,30,10,0.55)"; ctx.lineWidth = 1.15;
     for (let i = -1; i <= 1; i++) {
+      ctx.beginPath(); ctx.ellipse(i * s * 0.38, 0, s * 0.22, s * 0.42, 0, 0, Math.PI * 2); ctx.stroke();
+    }
+    for (const side of [-1, 1]) for (let i = -1; i <= 1; i++) {
       ctx.beginPath();
-      ctx.ellipse(i * s * 0.38, 0, s * 0.22, s * 0.42, 0, 0, Math.PI * 2);
+      ctx.ellipse(i * s * 0.32, side * s * 0.28, s * 0.26, s * 0.22, side * 0.15, 0, Math.PI * 2);
       ctx.stroke();
     }
-    for (const side of [-1, 1]) {
-      for (let i = -1; i <= 1; i++) {
-        ctx.beginPath();
-        ctx.ellipse(i * s * 0.32, side * s * 0.28, s * 0.26, s * 0.22, side * 0.15, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-    }
-    ctx.strokeStyle = "rgba(15, 25, 8, 0.35)";
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(-s * 0.7, 0);
-    ctx.lineTo(s * 0.7, 0);
-    ctx.stroke();
-
     ctx.fillStyle = "#4a7a38";
-    ctx.beginPath();
-    ctx.ellipse(s * 0.85, -1, 7, 5, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.ellipse(s * 0.85, -1, 7, 5, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = "#3f6e32";
-    ctx.beginPath();
-    ctx.ellipse(s * 1.12, -2, 9, 6.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = "rgba(230, 200, 70, 0.85)";
-    ctx.lineWidth = 1.3;
-    ctx.lineCap = "round";
-    ctx.beginPath();
-    ctx.moveTo(s * 0.95, -6);
-    ctx.lineTo(s * 1.28, -5);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(s * 0.95, 2);
-    ctx.lineTo(s * 1.25, 3);
-    ctx.stroke();
-
+    ctx.beginPath(); ctx.ellipse(s * 1.12, -2, 9, 6.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "rgba(230,200,70,0.85)"; ctx.lineWidth = 1.3; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(s * 0.95, -6); ctx.lineTo(s * 1.28, -5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(s * 0.95, 2); ctx.lineTo(s * 1.25, 3); ctx.stroke();
     ctx.fillStyle = "#d4452f";
-    ctx.beginPath();
-    ctx.ellipse(s * 1.05, -7.5, 4.2, 2.4, 0.35, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#a83220";
-    ctx.beginPath();
-    ctx.ellipse(s * 1.05, -7.5, 2.2, 1.2, 0.35, 0, Math.PI * 2);
-    ctx.fill();
-
+    ctx.beginPath(); ctx.ellipse(s * 1.05, -7.5, 4.2, 2.4, 0.35, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = "#1a1e12";
-    ctx.beginPath();
-    ctx.arc(s * 1.2, -3, 1.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "rgba(255,255,255,0.45)";
-    ctx.beginPath();
-    ctx.arc(s * 1.22, -3.5, 0.5, 0, Math.PI * 2);
-    ctx.fill();
-
+    ctx.beginPath(); ctx.arc(s * 1.2, -3, 1.5, 0, Math.PI * 2); ctx.fill();
     const jaw = this.eatTimer > 0 ? 3.2 * Math.sin((0.55 - this.eatTimer) * 14) : 0;
     ctx.fillStyle = "#2a4020";
     ctx.beginPath();
-    ctx.moveTo(s * 1.26, -1.2);
-    ctx.lineTo(s * 1.40, -0.2 + jaw * 0.15);
-    ctx.lineTo(s * 1.26, 1.6 + jaw);
-    ctx.closePath();
-    ctx.fill();
-    if (jaw > 1) {
-      ctx.fillStyle = "#1a1008";
-      ctx.beginPath();
-      ctx.ellipse(s * 1.30, 0.6 + jaw * 0.3, 2.2, jaw * 0.55, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
+    ctx.moveTo(s * 1.26, -1.2); ctx.lineTo(s * 1.40, -0.2); ctx.lineTo(s * 1.26, 1.6 + jaw);
+    ctx.closePath(); ctx.fill();
     if (this.belly > 0.2) {
-      ctx.fillStyle = `rgba(40, 60, 25, ${0.25 + this.belly * 0.35})`;
+      ctx.fillStyle = `rgba(40,60,25,${0.25 + this.belly * 0.35})`;
       ctx.beginPath();
       ctx.ellipse(0, s * 0.35, s * 0.55 * this.belly, s * 0.18 * this.belly, 0, 0, Math.PI * 2);
       ctx.fill();
     }
-
     ctx.restore();
   }
 }
 
-/* ========== AUDIO ========== */
+/* —— audio —— */
 let audioCtx = null;
 function playBlip(freq = 480) {
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === "suspended") audioCtx.resume();
     const t0 = audioCtx.currentTime;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
     osc.type = "sine";
     osc.frequency.setValueAtTime(freq, t0);
     osc.frequency.exponentialRampToValueAtTime(freq * 0.6, t0 + 0.12);
@@ -1233,17 +996,7 @@ function playBlip(freq = 480) {
   } catch (_) {}
 }
 
-/* ========== SETUP ========== */
-const PALETTES = [
-  { light: "#ffb84d", dark: "#ff7a2e" },
-  { light: "#ffcf6b", dark: "#ff9a3d", patch: "rgba(255,255,255,.55)" },
-  { light: "#ff9d6b", dark: "#e85a2e" },
-  { light: "#ff6b9d", dark: "#e02060", patch: "rgba(255,255,255,.4)" },
-  { light: "#7ec8ff", dark: "#2a6fc0" },
-  { light: "#ffe566", dark: "#e0a020", patch: "rgba(40,30,20,.35)" },
-  { light: "#ff8c42", dark: "#c04010", patch: "rgba(255,220,100,.45)" },
-  { light: "#e0b0ff", dark: "#8a40c0" }
-];
+/* —— setup —— */
 let fishes = PALETTES.slice(0, 3).map(p => new Goldfish(p));
 let turtle = new Turtle();
 
@@ -1261,28 +1014,17 @@ function changeWater() {
 function toggleFilter() {
   filterOn = !filterOn;
   const btn = document.getElementById("btnFilter");
-  if (btn) {
-    btn.textContent = filterOn ? "🌀 过滤·开" : "🌀 过滤";
-    btn.style.borderColor = filterOn ? "#3dcc7a" : "";
-    btn.style.color = filterOn ? "#3dcc7a" : "";
-  }
+  btn.textContent = filterOn ? "🌀 过滤·开" : "🌀 过滤";
+  btn.style.borderColor = filterOn ? "#3dcc7a" : "";
+  btn.style.color = filterOn ? "#3dcc7a" : "";
   playBlip(filterOn ? 500 : 280);
 }
-/** Click fish count → add one vivid adult goldfish (big eyes, bright colors). */
 function addAdultGoldfish() {
-  if (fishes.filter(f => f.alive).length >= MAX_FISH) {
-    playBlip(180);
-    return;
-  }
-  const hue = PALETTES[Math.floor(Math.random() * PALETTES.length)];
-  // slight extra saturation bias for "show quality" fish
-  const show = {
-    light: hue.light,
-    dark: hue.dark,
-    patch: hue.patch || (Math.random() < 0.5 ? "rgba(255,255,255,.5)" : undefined)
-  };
-  const g = new Goldfish(show, "adult");
-  g.size = rand(1.05, 1.25); // larger body
+  if (fishes.filter(f => f.alive).length >= MAX_FISH) { playBlip(180); return; }
+  const hue = { ...PALETTES[Math.floor(Math.random() * PALETTES.length)] };
+  if (!hue.patch && Math.random() < 0.5) hue.patch = "rgba(255,255,255,.5)";
+  const g = new Goldfish(hue, "adult");
+  g.size = rand(1.05, 1.25);
   g.hunger = 0.55;
   g.x = rand(W * 0.25, W * 0.75);
   g.y = rand(surfaceY() + 30, floorY() - 30);
@@ -1292,15 +1034,12 @@ function addAdultGoldfish() {
 
 document.getElementById("btnFeed").addEventListener("click", randomFeedBurst);
 document.getElementById("btnCycle").addEventListener("click", () => {
-  isNight = !isNight;
-  staticDirty = true;
-  playBlip(isNight ? 300 : 700);
+  isNight = !isNight; staticDirty = true; playBlip(isNight ? 300 : 700);
 });
 document.getElementById("btnWater").addEventListener("click", changeWater);
 document.getElementById("btnFilter").addEventListener("click", toggleFilter);
 document.getElementById("btnTrim").addEventListener("click", trimPlants);
 document.getElementById("btnAddFish").addEventListener("click", addAdultGoldfish);
-
 canvas.addEventListener("click", e => {
   const rect = canvas.getBoundingClientRect();
   const x = e.clientX - rect.left, y = e.clientY - rect.top;
@@ -1309,119 +1048,82 @@ canvas.addEventListener("click", e => {
   playBlip(560);
 });
 
-/* ========== HUD ========== */
+/* —— HUD / eco —— */
 const wqBar = document.getElementById("wqBar");
 const oxBar = document.getElementById("oxBar");
 const popStatHud = document.getElementById("popStatHud");
 const wqMonitorEl = document.getElementById("wqMonitor");
-let wqSampleAcc = 0;
 
 function updateHUD() {
   const pct = Math.round(waterQuality * 100);
   wqBar.style.width = pct + "%";
-  wqBar.style.background = waterQuality > 0.55 ? "#3dcc7a"
-    : waterQuality > 0.3 ? "#d4a017" : "#d4452f";
+  wqBar.style.background = waterQuality > 0.55 ? "#3dcc7a" : waterQuality > 0.3 ? "#d4a017" : "#d4452f";
   const ox = Math.round(oxygen * 100);
   oxBar.style.width = ox + "%";
-  oxBar.style.background = oxygen > 0.55 ? "#5ec8ff"
-    : oxygen > 0.3 ? "#d4a017" : "#d4452f";
+  oxBar.style.background = oxygen > 0.55 ? "#5ec8ff" : oxygen > 0.3 ? "#d4a017" : "#d4452f";
   const alive = fishes.filter(f => f.alive).length;
   const babies = fishes.filter(f => f.alive && f.stage === "baby").length;
-  const eggN = eggs.length;
   const hideN = fishes.filter(f => f.alive && f.hiding).length;
   const armorN = fishes.filter(f => f.alive && f.armor >= 0.4).length;
+  const stressN = fishes.filter(f => f.alive && f.stressLevel() > 0.4).length;
   let extra = "";
   if (babies) extra += ` · 幼${babies}`;
-  if (eggN) extra += ` · 卵${eggN}`;
+  if (eggs.length) extra += ` · 卵${eggs.length}`;
   if (hideN) extra += ` · 藏${hideN}`;
   if (armorN) extra += ` · 甲${armorN}`;
-  if (turtle && turtle.peaceful) extra += ` · 和平`;
+  if (stressN) extra += ` · 压${stressN}`;
+  if (turtle.peaceful) extra += ` · 和平`;
   popStatHud.textContent = `🐟 ${alive}` + extra;
-
-  // water quality monitor panel
   const g = wqGrade(waterQuality);
-  const trend = wqTrend();
-  const advice = wqAdvice(waterQuality);
   wqMonitorEl.className = g.cls;
   wqMonitorEl.innerHTML =
-    `水质监测 · <b>${g.label}</b> ${pct}% ${trend}` +
-    `<br><span style="opacity:.9">O₂ ${ox}% · 营养 ${Math.round(nutrients * 100)}%` +
-    (filterOn ? " · 过滤开" : "") + `</span>` +
-    `<br><span style="opacity:.85">${advice}</span>`;
-
-  if (wqAlertTimer > 0) {
-    // timer decremented in updateEco
-  } else {
-    document.getElementById("wqAlert").classList.remove("show");
-  }
+    `水质监测 · <b>${g.label}</b> ${pct}% ${wqTrend()}<br>` +
+    `<span style="opacity:.9">O₂ ${ox}% · 营养 ${Math.round(nutrients * 100)}%` +
+    (filterOn ? " · 过滤开" : "") + `</span><br>` +
+    `<span style="opacity:.85">${wqAdvice()}</span>`;
+  if (wqAlertTimer <= 0) document.getElementById("wqAlert").classList.remove("show");
 }
 
-/* ========== ECO TICK ========== */
 function updateEco(dt) {
   const n = fishes.filter(f => f.alive).length;
-
   if (filterOn) {
     waterQuality = Math.min(1, waterQuality + 0.028 * dt);
     nutrients = Math.max(0, nutrients - 0.012 * dt);
     oxygen = Math.min(1, oxygen + 0.018 * dt);
-  } else {
-    waterQuality = clamp(waterQuality + 0.002 * dt, 0, 1);
-  }
-
+  } else waterQuality = clamp(waterQuality + 0.002 * dt, 0, 1);
   oxygen = clamp(oxygen + (isNight ? -0.006 : 0.01) * dt, 0, 1);
-
   if (n > 4) {
     waterQuality = Math.max(0, waterQuality - 0.003 * (n - 4) * dt);
     oxygen = Math.max(0, oxygen - 0.005 * (n - 4) * dt);
   }
-  if (isNight && n > 5)
-    waterQuality = Math.max(0, waterQuality - 0.003 * (n - 5) * dt);
-
-  if (turtle) oxygen = Math.max(0, oxygen - 0.01 * dt);
-
-  // monitoring samples + alert countdown
+  if (isNight && n > 5) waterQuality = Math.max(0, waterQuality - 0.003 * (n - 5) * dt);
+  oxygen = Math.max(0, oxygen - 0.01 * dt);
   wqSampleAcc += dt;
-  if (wqSampleAcc >= 0.45) {
-    wqSampleAcc = 0;
-    pushWqSample(dt);
-  }
+  if (wqSampleAcc >= 0.45) { wqSampleAcc = 0; pushWqSample(); }
   if (wqAlertTimer > 0) wqAlertTimer -= dt;
-
   fishes = fishes.filter(f => f.alive);
 }
 
-/* ========== MAIN LOOP ========== */
+/* —— loop —— */
 let last = performance.now();
 const actors = [];
 function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
-  last = now;
-  t += dt;
-
-  updateBubbles(dt);
-  updateFood(dt);
-  updateEggs(dt);
-  updatePlants(dt);
-  updateEco(dt);
+  last = now; t += dt;
+  updateBubbles(dt); updateFood(dt); updateEggs(dt);
+  updatePlants(dt); updateEco(dt);
   turtle.update(dt);
   for (let i = 0; i < fishes.length; i++) fishes[i].update(dt);
-
   if (staticDirty) rebuildStaticLayer();
-
   ctx.clearRect(0, 0, W, H);
   drawWater();
   ctx.drawImage(staticCanvas, 0, 0, W, H);
-  drawPlants();
-  drawEggs();
-  drawBubbles();
-  drawFood();
-
+  drawPlants(); drawEggs(); drawBubbles(); drawFood();
   actors.length = 0;
   actors.push(turtle);
   for (let i = 0; i < fishes.length; i++) actors.push(fishes[i]);
   actors.sort((a, b) => a.y - b.y);
   for (let i = 0; i < actors.length; i++) actors[i].draw();
-
   updateHUD();
   requestAnimationFrame(loop);
 }
