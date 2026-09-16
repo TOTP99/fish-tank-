@@ -146,12 +146,39 @@ button.gold{background:linear-gradient(160deg,var(--gold),#a9782f);color:#231705
 .metric b{display:block;color:#e8f8fb;font-size:13px;line-height:1.2;white-space:nowrap}.metric span{display:block;color:#87aab3;font-size:9px;margin-top:0;text-align:right;white-space:nowrap}
 .console-led{display:inline-block;width:6px;height:6px;border-radius:50%;background:#45e58a;box-shadow:0 0 8px #45e58a;margin-right:4px}
 #sideControls .ctrl-row{gap:5px}#sideControls button{border-color:rgba(120,190,205,.3);background:linear-gradient(180deg,#1b3c46,#10252d);color:#d9f4f7;font-weight:800}
+
+/* 沉浸/全屏模式样式 */
+body.immersive #sideDisplay,
+body.immersive #sideControls {
+  display: none !important;
+}
+body.immersive #app {
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  max-height: 100dvh !important;
+  gap: 0 !important;
+}
+body.immersive #stage {
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  border-radius: 0 !important;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left) !important;
+}
 </style>
 </head>
 <body>
 <div id="app">
   <div id="sideDisplay">
-    <div class="console-head"><span>◈ AQUA CONTROL</span><span><i class="console-led"></i>ONLINE</span></div>
+    <div class="console-head">
+      <span>◈ AQUA CONTROL</span>
+      <span>
+        <button type="button" id="btnImmersive" style="font-size:9px; padding:1px 5px; margin-right:4px; min-width:0; background:rgba(255,255,255,.15); border:none; color:#a9dbe5; border-radius:4px; cursor:pointer;">⛶ 最大化</button>
+        <i class="console-led"></i>ONLINE
+      </span>
+    </div>
     <div id="popStatHud">🐟 3</div>
     <div id="wqMonitor">水质监测 · 优秀</div>
     <div class="console-grid">
@@ -745,7 +772,6 @@ class Goldfish {
     const step = Math.min(speed * dt, dist);
     this.x = clamp(this.x + Math.cos(this.dir) * step, 20, W - 20);
     this.y = clamp(this.y + Math.sin(this.dir) * step, surfaceY() + 16, floorY() - 10);
-    // swim cycle: faster when fleeing / chasing food
     const animRate = this.fleeing ? 14 : (this.hunger < 0.85 && foods.some(f => !f.eaten) ? 10 : 6.5);
     this.wiggle += dt * (animRate + speed * 0.12);
     if (this.hunger > 0.5) {
@@ -769,7 +795,6 @@ class Goldfish {
     const gasp = oxygen < 0.35 || stress > 0.55;
     const starving = this.hunger < 0.2;
     const w = this.wiggle;
-    // swim cycle amplitudes
     const bodyWave = Math.sin(w) * (0.07 + stress * 0.06);
     const tailAmp = this.fleeing ? 0.85 : 0.55;
     const tailWag = Math.sin(w * 1.8) * tailAmp;
@@ -791,7 +816,6 @@ class Goldfish {
     bodyGrad.addColorStop(0.55, colL);
     bodyGrad.addColorStop(1, colL);
 
-    // caudal fin — two lobes, out of phase
     ctx.fillStyle = colL;
     ctx.beginPath();
     ctx.moveTo(-s * 0.85, 0);
@@ -804,7 +828,6 @@ class Goldfish {
     ctx.quadraticCurveTo(-s * 1.5, s * 0.05, -s * 0.9, 0);
     ctx.fill();
 
-    // body with slight squash from wave
     const bodyH = s * (0.70 + Math.sin(w * 2) * 0.03);
     ctx.fillStyle = bodyGrad;
     ctx.beginPath(); ctx.ellipse(0, 0, s * 0.95, bodyH, 0, 0, Math.PI * 2); ctx.fill();
@@ -829,7 +852,6 @@ class Goldfish {
       ctx.beginPath(); ctx.ellipse(s * 0.3, s * 0.15, s * 0.22, s * 0.16, -0.4, 0, Math.PI * 2); ctx.fill();
     }
 
-    // dorsal fin
     ctx.fillStyle = colL;
     ctx.beginPath();
     ctx.moveTo(-s * 0.15, -bodyH * 0.85);
@@ -837,14 +859,12 @@ class Goldfish {
     ctx.quadraticCurveTo(s * 0.1, -bodyH * 0.95, -s * 0.15, -bodyH * 0.85);
     ctx.fill();
 
-    // anal fin
     ctx.beginPath();
     ctx.moveTo(-s * 0.1, bodyH * 0.8);
     ctx.quadraticCurveTo(s * 0.05, bodyH * (1.25 - dorsalWag * 0.5), s * 0.3, bodyH * 0.7);
     ctx.quadraticCurveTo(s * 0.05, bodyH * 0.9, -s * 0.1, bodyH * 0.8);
     ctx.fill();
 
-    // pectoral fins (both sides, flap)
     for (const side of [-1, 1]) {
       const ang = side * (0.85 + pectoral * 0.5);
       ctx.save();
@@ -859,7 +879,6 @@ class Goldfish {
     }
     ctx.globalAlpha = 1;
 
-    // telescope eyes
     for (const side of [-1, 1]) {
       const ex = s * (this.stage === "baby" ? 0.5 : 0.58);
       const ey = side * s * (this.stage === "baby" ? 0.28 : 0.34);
@@ -875,7 +894,6 @@ class Goldfish {
       }
     }
 
-    // mouth open pulse when eating / fleeing
     if (this.fleeing || gasp) {
       const mo = 1.2 + Math.sin(w * 4) * 0.8;
       ctx.fillStyle = "rgba(40,20,20,.55)";
@@ -1136,7 +1154,6 @@ function changeWater() {
 function toggleFilter() {
   filterOn = !filterOn;
   const btn = document.getElementById("btnFilter");
-  // fixed-width label avoids layout shift on toggle
   btn.textContent = filterOn ? "🌀 开过滤" : "🌀 过滤";
   btn.style.borderColor = filterOn ? "#3dcc7a" : "";
   btn.style.color = filterOn ? "#3dcc7a" : "";
@@ -1164,8 +1181,19 @@ document.getElementById("btnFilter").addEventListener("click", toggleFilter);
 document.getElementById("btnTrim").addEventListener("click", trimPlants);
 document.getElementById("btnAddFish").addEventListener("click", addAdultGoldfish);
 
-/* 横屏时把"加鱼/投食"按钮移到右侧控制栏、标题移到左侧显示栏顶部；
-   同时按实际可用空间精确计算鱼缸缸体尺寸，撑到可放下的最大尺寸的95% */
+/* —— 沉浸/最大化模式切换 —— */
+const btnImmersive = document.getElementById("btnImmersive");
+if (btnImmersive) {
+  btnImmersive.addEventListener("click", () => {
+    document.body.classList.toggle("immersive");
+    const isImmersive = document.body.classList.contains("immersive");
+    btnImmersive.textContent = isImmersive ? "✖ 退出" : "⛶ 最大化";
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 50);
+  });
+}
+
 (function () {
   const btnAddFish = document.getElementById("btnAddFish");
   const btnFeed = document.getElementById("btnFeed");
@@ -1193,8 +1221,6 @@ document.getElementById("btnAddFish").addEventListener("click", addAdultGoldfish
     }
   }
 
-  /* 精确计算鱼缸能放到的最大尺寸（同时满足横向、纵向可用空间与4:5缸体比例），
-     再取其95%，让缸体尽量大又留一点边距 */
   let fitQueued = false;
   function fitStage() {
     fitQueued = false;
@@ -1223,7 +1249,7 @@ document.getElementById("btnAddFish").addEventListener("click", addAdultGoldfish
       maxW = appMaxW;
       maxH = availH - sdH - scH - gapRow * 2;
     }
-    const ratio = 4 / 5; // width / height
+    const ratio = 4 / 5;
     let w = Math.max(0, maxW), h = w / ratio;
     if (h > maxH) { h = Math.max(0, maxH); w = h * ratio; }
     w *= 0.95; h *= 0.95;
@@ -1264,7 +1290,6 @@ canvas.addEventListener("click", e => {
   playBlip(560);
 });
 
-/* —— HUD / eco —— */
 const wqBar = document.getElementById("wqBar");
 const oxBar = document.getElementById("oxBar");
 const popStatHud = document.getElementById("popStatHud");
@@ -1324,7 +1349,6 @@ function updateEco(dt) {
   fishes = fishes.filter(f => f.alive);
 }
 
-/* —— loop —— */
 let last = performance.now();
 const actors = [];
 function loop(now) {
