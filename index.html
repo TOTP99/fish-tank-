@@ -22,7 +22,17 @@ body{
 #app{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   width:100%;max-width:440px;max-height:100%;gap:6px;
-  overflow:hidden;min-width:0;
+  overflow:hidden;min-width:0;min-height:0;
+}
+@media (orientation:portrait){
+  #app{height:100%;}
+  #stage{max-height:calc(100% - 150px);}
+}
+@media (max-width:559px) and (orientation:landscape){
+  #app{flex-direction:row;gap:6px;max-width:100%;}
+  #stage{height:calc(100% - 8px);max-height:calc(100dvh - 20px);}
+  #sideDisplay,#sideControls{width:92px;padding:5px 4px;}
+  #sideControls button{font-size:9px;padding:5px 3px;min-width:0;}
 }
 #sideDisplay{order:2;flex:0 0 auto;width:100%;min-width:0;overflow:hidden}
 #stage{order:1}
@@ -120,19 +130,36 @@ button.gold{background:linear-gradient(160deg,var(--gold),#a9782f);color:#231705
   #sideDisplay{order:1;width:min(200px,22vw);flex:0 0 auto;justify-content:center;padding:10px 8px;
     border:1px solid var(--gold-line);background:linear-gradient(165deg,#1c1610,#120e0a);
     box-shadow:0 4px 16px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04)}
+  #sideDisplay #titleWrap{margin-bottom:10px}
   #sideControls{order:3;width:min(200px,22vw);flex:0 0 auto;justify-content:center;padding:10px 8px}
   #sideControls .ctrl-row{flex-direction:column;align-items:stretch}
   #sideControls button{justify-content:center;width:100%;font-size:11px;padding:7px 8px}
   #wqMonitor{font-size:10px}
   #popStatHud{font-size:11px}
 }
+
+/* professional aquarium console */
+#sideDisplay,#sideControls{background:linear-gradient(180deg,rgba(20,35,42,.96),rgba(8,20,27,.96));border:1px solid rgba(111,190,205,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 6px 18px rgba(0,0,0,.22)}
+.console-head{display:flex;justify-content:space-between;align-items:center;color:#a9dbe5;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.console-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.metric{background:rgba(0,0,0,.22);border:1px solid rgba(126,190,205,.15);border-radius:7px;padding:5px 6px;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.metric b{display:block;color:#e8f8fb;font-size:13px;line-height:1.2;white-space:nowrap}.metric span{display:block;color:#87aab3;font-size:9px;margin-top:0;text-align:right;white-space:nowrap}
+.console-led{display:inline-block;width:6px;height:6px;border-radius:50%;background:#45e58a;box-shadow:0 0 8px #45e58a;margin-right:4px}
+#sideControls .ctrl-row{gap:5px}#sideControls button{border-color:rgba(120,190,205,.3);background:linear-gradient(180deg,#1b3c46,#10252d);color:#d9f4f7;font-weight:800}
 </style>
 </head>
 <body>
 <div id="app">
   <div id="sideDisplay">
+    <div class="console-head"><span>◈ AQUA CONTROL</span><span><i class="console-led"></i>ONLINE</span></div>
     <div id="popStatHud">🐟 3</div>
     <div id="wqMonitor">水质监测 · 优秀</div>
+    <div class="console-grid">
+      <div class="metric"><b id="tempRead">24.0°C</b><span>TEMP</span></div>
+      <div class="metric"><b id="phRead">7.2</b><span>pH</span></div>
+      <div class="metric"><b id="nutRead">25%</b><span>NUTRIENTS</span></div>
+      <div class="metric"><b id="oxRead">85%</b><span>OXYGEN</span></div>
+    </div>
     <div class="ctrl-row">
       <button type="button" id="btnAddFish" title="添加大金鱼">🐟+</button>
       <span class="ctrl-stat">水质 <span class="bar"><i id="wqBar"></i></span></span>
@@ -362,11 +389,11 @@ function rebuildStaticLayer() {
 
 /* —— plants —— */
 const plants = [
-  { xFrac: 0.06, baseH: 0.22, h: 0.22, sway: 0.6, health: 1 },
-  { xFrac: 0.30, baseH: 0.26, h: 0.26, sway: 1.9, health: 1 },
-  { xFrac: 0.55, baseH: 0.18, h: 0.18, sway: 3.1, health: 1 },
-  { xFrac: 0.76, baseH: 0.32, h: 0.32, sway: 0, health: 1 },
-  { xFrac: 0.96, baseH: 0.22, h: 0.22, sway: 1.4, health: 1 }
+  { xFrac: 0.06, baseH: 0.22, h: 0.22, sway: 0.6, health: 1, type: "grass", hue: 122, density: 7 },
+  { xFrac: 0.30, baseH: 0.26, h: 0.26, sway: 1.9, health: 1, type: "broadleaf", hue: 92, density: 5 },
+  { xFrac: 0.55, baseH: 0.18, h: 0.18, sway: 3.1, health: 1, type: "redPlant", hue: 8, density: 6 },
+  { xFrac: 0.76, baseH: 0.32, h: 0.32, sway: 0, health: 1, type: "grass", hue: 145, density: 9 },
+  { xFrac: 0.96, baseH: 0.22, h: 0.22, sway: 1.4, health: 1, type: "moss", hue: 62, density: 4 }
 ];
 function updatePlants(dt) {
   const light = isNight ? 0.025 : 0.09;
@@ -388,22 +415,24 @@ function updatePlants(dt) {
 function drawPlants() {
   const fy = floorY();
   for (const p of plants) {
-    const hue = isNight
-      ? (p.health > 0.5 ? "#1f5c3a" : "#1a3d28")
-      : (p.health > 0.5 ? "#2e9c56" : "#4a7a40");
     const x = W * p.xFrac, h = H * p.h;
-    for (let b = 0; b < 5; b++) {
-      const off = (b - 2.5) * 6;
-      ctx.beginPath();
-      ctx.moveTo(x + off, fy + 4);
-      ctx.quadraticCurveTo(
-        x + off + Math.sin(t * 1.1 + b + p.sway) * 10, fy + 4 - h * 0.55,
-        x + off + Math.sin(t * 1.1 + b + p.sway + 1) * 16, fy + 4 - h
-      );
-      ctx.lineWidth = 5 - b * 0.4;
-      ctx.strokeStyle = hue;
-      ctx.lineCap = "round";
-      ctx.stroke();
+    const baseHue = isNight ? p.hue - 12 : p.hue;
+    const sat = p.health > .5 ? 62 : 35;
+    const light = isNight ? 22 : (p.health > .5 ? 42 : 30);
+    const hue = `hsl(${baseHue},${sat}%,${light}%)`;
+    ctx.strokeStyle = hue; ctx.fillStyle = hue; ctx.lineCap = "round";
+    if (p.type === "broadleaf") {
+      for(let b=0;b<p.density;b++){ const off=(b-(p.density-1)/2)*5; const sway=Math.sin(t*.9+b+p.sway)*10;
+        ctx.lineWidth=2.4; ctx.beginPath(); ctx.moveTo(x+off,fy+4); ctx.quadraticCurveTo(x+off+sway,fy-h*.55,x+off+sway*.7,fy-h); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(x+off+sway*.7,fy-h*(.62+.04*(b%3)),7,15,-.35+Math.sin(b)*.15,0,Math.PI*2); ctx.fill(); }
+    } else if (p.type === "redPlant") {
+      for(let b=0;b<p.density;b++){ const off=(b-(p.density-1)/2)*4; const sway=Math.sin(t*1.3+b+p.sway)*12;
+        ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(x+off,fy+4); ctx.bezierCurveTo(x+off+sway,fy-h*.35,x+off-sway,fy-h*.7,x+off+sway*.6,fy-h); ctx.stroke();
+        ctx.fillStyle=`hsla(${baseHue+Math.sin(b)*8},${sat}%,${light+8}%,.8)`; ctx.beginPath(); ctx.ellipse(x+off+sway*.6,fy-h*.78,4,9,.4,0,Math.PI*2); ctx.fill(); ctx.fillStyle=hue; }
+    } else if (p.type === "moss") {
+      ctx.lineWidth=3; for(let b=0;b<9;b++){ const off=(b-4)*3.5; const hh=h*(.35+((b*7)%5)/10); ctx.beginPath(); ctx.moveTo(x+off,fy+3); ctx.quadraticCurveTo(x+off-5,fy-hh*.5,x+off+Math.sin(t+b)*4,fy-hh); ctx.stroke(); }
+    } else {
+      for(let b=0;b<p.density;b++){ const off=(b-(p.density-1)/2)*4.5; ctx.lineWidth=2.8; ctx.beginPath(); ctx.moveTo(x+off,fy+4); ctx.quadraticCurveTo(x+off+Math.sin(t*1.1+b+p.sway)*10,fy-h*.55,x+off+Math.sin(t*1.1+b+p.sway+1)*16,fy-h); ctx.stroke(); }
     }
   }
 }
@@ -554,7 +583,8 @@ class Goldfish {
     this.x = rand(W * 0.2, W * 0.8);
     this.y = rand(H * 0.25, H * 0.7);
     this.dir = rand(0, Math.PI * 2);
-    this.speed = stage === "baby" ? rand(18, 26) : rand(24, 34);
+    this.personality = { speedBias: rand(.72,1.38), turnRate: rand(.75,1.35), depth: rand(.18,.82), route: ["cruise","zigzag","bottom","surface"][Math.floor(Math.random()*4)] };
+    this.speed = (stage === "baby" ? rand(18, 26) : rand(24, 34)) * this.personality.speedBias;
     this.wiggle = rand(0, 10);
     this.hue = hue;
     this.size = stage === "baby" ? rand(0.35, 0.5) : rand(0.85, 1.15);
@@ -585,7 +615,11 @@ class Goldfish {
       this.ty = clamp(floorY() - H * p.h * 0.4 + rand(-15, 15), surfaceY() + 20, floorY() - 14);
     } else {
       this.tx = rand(margin, W - margin);
-      this.ty = rand(surfaceY() + 24, floorY() - 14);
+      const route = this.personality.route;
+      if (route === "bottom") this.ty = rand(floorY() - 70, floorY() - 14);
+      else if (route === "surface") this.ty = rand(surfaceY() + 24, surfaceY() + H * .22);
+      else if (route === "zigzag") this.ty = clamp(H * this.personality.depth + Math.sin(t*2.4+this.wiggle)*H*.18, surfaceY()+24, floorY()-14);
+      else this.ty = rand(surfaceY() + 24, floorY() - 14);
     }
     this.retarget = rand(2.5, 5);
   }
@@ -700,7 +734,7 @@ class Goldfish {
     let diff = Math.atan2(dy, dx) - this.dir;
     while (diff > Math.PI) diff -= Math.PI * 2;
     while (diff < -Math.PI) diff += Math.PI * 2;
-    this.dir += diff * Math.min(1, dt * (this.fleeing ? 4.8 : 2.2));
+    this.dir += diff * Math.min(1, dt * (this.fleeing ? 4.8 : 2.2) * this.personality.turnRate);
     let speed = this.speed;
     if (this.fleeing) speed *= 1.9;
     else if (this.hunger < 0.25) speed *= 0.65;
@@ -1161,13 +1195,18 @@ document.getElementById("btnAddFish").addEventListener("click", addAdultGoldfish
 
   /* 精确计算鱼缸能放到的最大尺寸（同时满足横向、纵向可用空间与4:5缸体比例），
      再取其95%，让缸体尽量大又留一点边距 */
+  let fitQueued = false;
   function fitStage() {
+    fitQueued = false;
     const isLandscape = mq.matches;
     const bs = getComputedStyle(document.body);
     const padH = (parseFloat(bs.paddingTop) || 0) + (parseFloat(bs.paddingBottom) || 0);
     const padW = (parseFloat(bs.paddingLeft) || 0) + (parseFloat(bs.paddingRight) || 0);
-    const availH = window.innerHeight - padH;
-    const availW = window.innerWidth - padW;
+    const viewport = window.visualViewport;
+    const vw = viewport ? viewport.width : window.innerWidth;
+    const vh = viewport ? viewport.height : window.innerHeight;
+    const availH = vh - padH;
+    const availW = vw - padW;
     const as = getComputedStyle(app);
     const appMaxW = Math.min(availW, parseFloat(as.maxWidth) || availW);
     let maxW, maxH;
@@ -1188,9 +1227,9 @@ document.getElementById("btnAddFish").addEventListener("click", addAdultGoldfish
     let w = Math.max(0, maxW), h = w / ratio;
     if (h > maxH) { h = Math.max(0, maxH); w = h * ratio; }
     w *= 0.95; h *= 0.95;
-    if (w < 60 || h < 60) return; // 空间异常小时保持原CSS兜底尺寸，不做处理
-    stage.style.width = w + "px";
-    stage.style.height = h + "px";
+    if (w < 60 || h < 60) return;
+    stage.style.width = Math.floor(w) + "px";
+    stage.style.height = Math.floor(h) + "px";
     scheduleResize();
   }
 
@@ -1202,10 +1241,16 @@ document.getElementById("btnAddFish").addEventListener("click", addAdultGoldfish
   applyLayout(mq.matches);
   if (mq.addEventListener) mq.addEventListener("change", e => applyLayout(e.matches));
   else mq.addListener(e => applyLayout(e.matches));
-  window.addEventListener("resize", () => fitStage());
-  window.addEventListener("orientationchange", () => fitStage());
+  function queueFit(){
+    if (fitQueued) return;
+    fitQueued = true;
+    requestAnimationFrame(fitStage);
+  }
+  window.addEventListener("resize", queueFit);
+  window.addEventListener("orientationchange", () => setTimeout(queueFit, 80));
+  if (window.visualViewport) window.visualViewport.addEventListener("resize", queueFit);
   if (window.ResizeObserver) {
-    const ro = new ResizeObserver(() => fitStage());
+    const ro = new ResizeObserver(() => queueFit());
     ro.observe(sideDisplay);
     ro.observe(sideControls);
   }
@@ -1224,12 +1269,17 @@ const wqBar = document.getElementById("wqBar");
 const oxBar = document.getElementById("oxBar");
 const popStatHud = document.getElementById("popStatHud");
 const wqMonitorEl = document.getElementById("wqMonitor");
+const tempRead=document.getElementById("tempRead"), phRead=document.getElementById("phRead"), nutRead=document.getElementById("nutRead"), oxRead=document.getElementById("oxRead");
 
 function updateHUD() {
   const pct = Math.round(waterQuality * 100);
   wqBar.style.width = pct + "%";
   wqBar.style.background = waterQuality > 0.55 ? "#3dcc7a" : waterQuality > 0.3 ? "#d4a017" : "#d4452f";
   const ox = Math.round(oxygen * 100);
+  tempRead.textContent = (isNight ? 22.6 : 24.0).toFixed(1) + "°C";
+  phRead.textContent = (6.8 + waterQuality * .6).toFixed(1);
+  nutRead.textContent = Math.round(nutrients*100) + "%";
+  oxRead.textContent = ox + "%";
   oxBar.style.width = ox + "%";
   oxBar.style.background = oxygen > 0.55 ? "#5ec8ff" : oxygen > 0.3 ? "#d4a017" : "#d4452f";
   const alive = fishes.filter(f => f.alive).length;
