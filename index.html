@@ -28,8 +28,8 @@ body{
 #stage{order:1}
 #sideControls{order:3;flex:0 0 auto;width:100%;min-width:0;overflow:hidden}
 #stage{
-  position:relative;width:100%;flex:1 1 auto;min-height:0;min-width:0;
-  aspect-ratio:4/5;max-height:min(58vh,480px);
+  position:relative;width:auto;max-width:100%;height:min(58vh,480px);flex:0 0 auto;min-height:0;min-width:0;
+  aspect-ratio:4/5;
   border-radius:16px;padding:10px;
   background:linear-gradient(155deg,var(--frame-hi),var(--frame) 40%,#1a130c);
   box-shadow:0 14px 36px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);
@@ -75,10 +75,15 @@ canvas{display:block;width:100%;height:100%}
 }
 #wqAlert.show{opacity:1}
 #sideDisplay,#sideControls{
-  width:100%;border:1px solid var(--gold-line);border-radius:12px;
+  width:100%;border-radius:12px;padding:6px 8px;
+}
+#sideControls{
+  border:1px solid var(--gold-line);
   background:linear-gradient(165deg,#1c1610,#120e0a);
   box-shadow:0 4px 16px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04);
-  padding:6px 8px;
+}
+#sideDisplay{
+  border:1px solid transparent;background:transparent;box-shadow:none;
 }
 #sideDisplay{display:flex;flex-direction:column;gap:4px}
 #sideControls{display:flex;flex-direction:column;gap:5px}
@@ -95,8 +100,10 @@ button:active{transform:scale(.94)}
 button.gold{background:linear-gradient(160deg,var(--gold),#a9782f);color:#231705;border-color:var(--gold)}
 #btnFilter{min-width:5.5em}
 .ctrl-stat{cursor:default;user-select:none;min-width:0}
-#wqMonitor{font-size:9px;font-weight:700;color:var(--ink);line-height:1.35;padding:2px;
-  text-shadow:0 1px 2px rgba(0,0,0,.5);min-height:3.9em;overflow:hidden}
+#wqMonitor{font-size:9px;font-weight:700;color:var(--ink);line-height:1.3;padding:2px;
+  text-shadow:0 1px 2px rgba(0,0,0,.5);min-height:1.3em;
+  white-space:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+#wqMonitor::-webkit-scrollbar{display:none}
 #wqMonitor.warn{color:#e8c45a}
 #wqMonitor.danger{color:#ff8a7a;animation:pulseDanger 1.2s ease-in-out infinite}
 @keyframes pulseDanger{0%,100%{opacity:1}50%{opacity:.75}}
@@ -110,7 +117,9 @@ button.gold{background:linear-gradient(160deg,var(--gold),#a9782f);color:#231705
     max-width:min(1100px,100%);max-height:100%;gap:12px}
   #stage{order:2;width:auto;flex:0 1 auto;height:min(86vh,520px);max-height:86vh;
     aspect-ratio:4/5;max-width:min(42vw,420px)}
-  #sideDisplay{order:1;width:min(200px,22vw);flex:0 0 auto;justify-content:center;padding:10px 8px}
+  #sideDisplay{order:1;width:min(200px,22vw);flex:0 0 auto;justify-content:center;padding:10px 8px;
+    border:1px solid var(--gold-line);background:linear-gradient(165deg,#1c1610,#120e0a);
+    box-shadow:0 4px 16px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04)}
   #sideControls{order:3;width:min(200px,22vw);flex:0 0 auto;justify-content:center;padding:10px 8px}
   #sideControls .ctrl-row{flex-direction:column;align-items:stretch}
   #sideControls button{justify-content:center;width:100%;font-size:11px;padding:7px 8px}
@@ -188,7 +197,7 @@ const rand = (a, b) => a + Math.random() * (b - a);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 let isNight = false, t = 0;
 const surfaceY = () => H * 0.10;
-const floorY = () => H * 0.90;
+const floorY = () => H * 0.87;
 
 /* —— ecosystem —— */
 let waterQuality = 0.92, nutrients = 0.25, oxygen = 0.85, filterOn = false;
@@ -337,8 +346,12 @@ function rebuildStaticLayer() {
     c.fillStyle = isNight ? "#3a3a40" : "#87878c";
     c.beginPath(); c.ellipse(x - s * 0.2, y - s * 0.3, s * 0.5, s * 0.3, 0, 0, Math.PI * 2); c.fill();
   }
-  rock(W * 0.18, fy + 6, 16);
-  rock(W * 0.22, fy + 10, 9);
+  rock(W * 0.16, fy + 6, 17);
+  rock(W * 0.21, fy + 11, 10);
+  rock(W * 0.5, fy + 5, 11);
+  rock(W * 0.62, fy + 9, 7);
+  rock(W * 0.94, fy + 7, 13);
+  rock(W * 0.90, fy + 12, 8);
   const px = W * 0.84, py = surfaceY() - 2;
   c.fillStyle = "#4a3018";
   c.beginPath(); c.ellipse(px, py, 34, 8, 0, 0, Math.PI * 2); c.fill();
@@ -349,9 +362,11 @@ function rebuildStaticLayer() {
 
 /* —— plants —— */
 const plants = [
-  { xFrac: 0.78, baseH: 0.34, h: 0.34, sway: 0, health: 1 },
-  { xFrac: 0.86, baseH: 0.24, h: 0.24, sway: 1.4, health: 1 },
-  { xFrac: 0.10, baseH: 0.20, h: 0.20, sway: 2.1, health: 1 }
+  { xFrac: 0.06, baseH: 0.22, h: 0.22, sway: 0.6, health: 1 },
+  { xFrac: 0.30, baseH: 0.26, h: 0.26, sway: 1.9, health: 1 },
+  { xFrac: 0.55, baseH: 0.18, h: 0.18, sway: 3.1, health: 1 },
+  { xFrac: 0.76, baseH: 0.32, h: 0.32, sway: 0, health: 1 },
+  { xFrac: 0.96, baseH: 0.22, h: 0.22, sway: 1.4, health: 1 }
 ];
 function updatePlants(dt) {
   const light = isNight ? 0.025 : 0.09;
@@ -1114,6 +1129,88 @@ document.getElementById("btnWater").addEventListener("click", changeWater);
 document.getElementById("btnFilter").addEventListener("click", toggleFilter);
 document.getElementById("btnTrim").addEventListener("click", trimPlants);
 document.getElementById("btnAddFish").addEventListener("click", addAdultGoldfish);
+
+/* 横屏时把"加鱼/投食"按钮移到右侧控制栏、标题移到左侧显示栏顶部；
+   同时按实际可用空间精确计算鱼缸缸体尺寸，撑到可放下的最大尺寸的95% */
+(function () {
+  const btnAddFish = document.getElementById("btnAddFish");
+  const btnFeed = document.getElementById("btnFeed");
+  const displayHome = { parent: btnAddFish.parentNode, next: btnAddFish.nextSibling };
+  const feedHome = { parent: btnFeed.parentNode, next: btnFeed.nextSibling };
+  const controlsRow = document.querySelector("#sideControls .ctrl-row");
+  const titleWrap = document.getElementById("titleWrap");
+  const hud = document.getElementById("hud");
+  const titleHome = { parent: titleWrap.parentNode, next: titleWrap.nextSibling };
+  const sideDisplay = document.getElementById("sideDisplay");
+  const sideControls = document.getElementById("sideControls");
+  const app = document.getElementById("app");
+  const stage = document.getElementById("stage");
+  const mq = window.matchMedia("(orientation: landscape) and (min-width: 560px)");
+
+  function relocate(isLandscape) {
+    if (isLandscape) {
+      controlsRow.insertBefore(btnAddFish, controlsRow.firstChild);
+      controlsRow.insertBefore(btnFeed, btnAddFish.nextSibling);
+      sideDisplay.insertBefore(titleWrap, sideDisplay.firstChild);
+    } else {
+      displayHome.parent.insertBefore(btnAddFish, displayHome.next);
+      feedHome.parent.insertBefore(btnFeed, feedHome.next);
+      titleHome.parent.insertBefore(titleWrap, titleHome.next);
+    }
+  }
+
+  /* 精确计算鱼缸能放到的最大尺寸（同时满足横向、纵向可用空间与4:5缸体比例），
+     再取其95%，让缸体尽量大又留一点边距 */
+  function fitStage() {
+    const isLandscape = mq.matches;
+    const bs = getComputedStyle(document.body);
+    const padH = (parseFloat(bs.paddingTop) || 0) + (parseFloat(bs.paddingBottom) || 0);
+    const padW = (parseFloat(bs.paddingLeft) || 0) + (parseFloat(bs.paddingRight) || 0);
+    const availH = window.innerHeight - padH;
+    const availW = window.innerWidth - padW;
+    const as = getComputedStyle(app);
+    const appMaxW = Math.min(availW, parseFloat(as.maxWidth) || availW);
+    let maxW, maxH;
+    if (isLandscape) {
+      const gapCol = parseFloat(as.columnGap) || parseFloat(as.gap) || 12;
+      const sdW = sideDisplay.getBoundingClientRect().width;
+      const scW = sideControls.getBoundingClientRect().width;
+      maxW = appMaxW - sdW - scW - gapCol * 2;
+      maxH = availH;
+    } else {
+      const gapRow = parseFloat(as.rowGap) || parseFloat(as.gap) || 6;
+      const sdH = sideDisplay.getBoundingClientRect().height;
+      const scH = sideControls.getBoundingClientRect().height;
+      maxW = appMaxW;
+      maxH = availH - sdH - scH - gapRow * 2;
+    }
+    const ratio = 4 / 5; // width / height
+    let w = Math.max(0, maxW), h = w / ratio;
+    if (h > maxH) { h = Math.max(0, maxH); w = h * ratio; }
+    w *= 0.95; h *= 0.95;
+    if (w < 60 || h < 60) return; // 空间异常小时保持原CSS兜底尺寸，不做处理
+    stage.style.width = w + "px";
+    stage.style.height = h + "px";
+    scheduleResize();
+  }
+
+  function applyLayout(isLandscape) {
+    relocate(isLandscape);
+    fitStage();
+  }
+
+  applyLayout(mq.matches);
+  if (mq.addEventListener) mq.addEventListener("change", e => applyLayout(e.matches));
+  else mq.addListener(e => applyLayout(e.matches));
+  window.addEventListener("resize", () => fitStage());
+  window.addEventListener("orientationchange", () => fitStage());
+  if (window.ResizeObserver) {
+    const ro = new ResizeObserver(() => fitStage());
+    ro.observe(sideDisplay);
+    ro.observe(sideControls);
+  }
+})();
+
 canvas.addEventListener("click", e => {
   const rect = canvas.getBoundingClientRect();
   const x = e.clientX - rect.left, y = e.clientY - rect.top;
@@ -1151,10 +1248,9 @@ function updateHUD() {
   const g = wqGrade(waterQuality);
   wqMonitorEl.className = g.cls;
   wqMonitorEl.innerHTML =
-    `水质监测 · <b>${g.label}</b> ${pct}% ${wqTrend()}<br>` +
-    `<span style="opacity:.9">O₂ ${ox}% · 营养 ${Math.round(nutrients * 100)}%` +
-    (filterOn ? " · 过滤开" : "") + `</span><br>` +
-    `<span style="opacity:.85">${wqAdvice()}</span>`;
+    `水质监测 · <b>${g.label}</b> ${pct}%${wqTrend()} · O₂${ox}% · 肥${Math.round(nutrients * 100)}%` +
+    (filterOn ? " · 过滤开" : "") +
+    `<span style="opacity:.85"> · ${wqAdvice()}</span>`;
   if (wqAlertTimer <= 0) document.getElementById("wqAlert").classList.remove("show");
 }
 
