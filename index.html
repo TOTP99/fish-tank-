@@ -211,7 +211,7 @@ button.gold{background:linear-gradient(160deg,var(--gold),#a9782f);color:#231705
         <button id="btnTrim">🌿 修剪</button>
       </div>
       <div class="ctrl-row" style="font-size:9px;opacity:.75;font-weight:600;justify-content:center;text-align:center;line-height:1.5;">
-        <span>手势提示：长按 = 菜单 &nbsp;·&nbsp; 点击 = 投食(可连点多投) &nbsp;·&nbsp; 画圈 = 换水 &nbsp;·&nbsp; 画✅ = 开/关过滤 &nbsp;·&nbsp; ←划→ = 修剪 &nbsp;·&nbsp; →划← = 定格画面 &nbsp;·&nbsp; ↓划↑ = 昼/夜 &nbsp;·&nbsp; ↑划↓ = 加鱼</span>
+        <span>手势提示：长按 = 菜单 &nbsp;·&nbsp; 点击 = 投食(可连点多投) &nbsp;·&nbsp; 画圈 = 换水 &nbsp;·&nbsp; 画✅ = 开/关过滤 &nbsp;·&nbsp; ←划→ = 修剪 &nbsp;·&nbsp; →划← = 乌龟疯狂吃鱼 &nbsp;·&nbsp; ↓划↑ = 昼/夜 &nbsp;·&nbsp; ↑划↓ = 加鱼</span>
       </div>
     </div>
   </div>
@@ -646,6 +646,7 @@ class Goldfish {
     this.hunger = stage === "baby" ? 0.4 : rand(0.3, 0.6);
     this.breedCD = rand(8, 18);
     this.mealsEaten = 0; this.armor = 0;
+    this.bites = 0; this.biteFlash = 0;
     this.alive = true;
   }
   pickTarget() {
@@ -727,6 +728,7 @@ class Goldfish {
     if (!this.alive) return;
     this.age += dt;
     this.breedCD -= dt;
+    if (this.biteFlash > 0) this.biteFlash = Math.max(0, this.biteFlash - dt);
     const cover = plantCoverAt(this.x, this.y);
     this.hiding = cover > 0.35;
     this.hideTime = this.hiding ? this.hideTime + dt : Math.max(0, this.hideTime - dt * 0.5);
@@ -870,6 +872,10 @@ class Goldfish {
     ctx.beginPath(); ctx.ellipse(0, 0, s * 0.95, bodyH, 0, 0, Math.PI * 2); ctx.fill();
     if (stress > 0.25) {
       ctx.fillStyle = `rgba(180,90,40,${stress * 0.22})`;
+      ctx.beginPath(); ctx.ellipse(0, 0, s * 0.95, bodyH, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    if (this.biteFlash > 0) {
+      ctx.fillStyle = `rgba(255,40,20,${Math.min(0.55, this.biteFlash * 1.1)})`;
       ctx.beginPath(); ctx.ellipse(0, 0, s * 0.95, bodyH, 0, 0, Math.PI * 2); ctx.fill();
     }
     // 鳞片质感：几道淡淡的弧形纹理，让身体不那么光秃
@@ -1039,6 +1045,7 @@ class Turtle {
     this.chasingFood = false; this.eatTimer = 0;
     this.belly = 0; this.digestTimer = 0; this.meals = 0;
     this.baskNeed = rand(18, 28); this.peaceful = false;
+    this.frenzy = false; this.frenzyTimer = 0;
     this.pickTarget();
   }
   pickTarget() {
@@ -1060,16 +1067,24 @@ class Turtle {
       if (d < bestD) { bestD = d; best = e; kind = "egg"; }
     }
     for (const f of fishes) {
-      if (!f.alive || f.stage !== "baby") continue;
-      const cover = plantCoverAt(f.x, f.y);
-      if (cover > 0.5 || f.hiding) continue;
+      if (!f.alive) continue;
+      if (f.armor >= 0.4) continue; // 有盔甲的鱼吃不了
       let shielded = false;
       for (const a of fishes) {
-        if (a.alive && a.stage === "adult" && a.armor >= 0.4 && Math.hypot(a.x - f.x, a.y - f.y) < 55) {
-          shielded = true; break;
+        if (a !== f && a.alive && a.armor >= 0.4 && Math.hypot(a.x - f.x, a.y - f.y) < 55) {
+          shielded = true; break; // 盔甲鱼在附近护体，挡住乌龟
         }
       }
       if (shielded) continue;
+      if (this.frenzy) {
+        // 疯狂吃鱼模式：无视遮蔽，大小鱼通吃（盔甲鱼及其护体范围除外）
+        const d = Math.hypot(f.x - this.x, f.y - this.y);
+        if (d < bestD) { bestD = d; best = f; kind = f.stage === "adult" ? "adult" : "baby"; }
+        continue;
+      }
+      if (f.stage !== "baby") continue;
+      const cover = plantCoverAt(f.x, f.y);
+      if (cover > 0.5 || f.hiding) continue;
       const d = Math.hypot(f.x - this.x, f.y - this.y) + cover * 60;
       if (d < bestD) { bestD = d; best = f; kind = "baby"; }
     }
@@ -1079,17 +1094,29 @@ class Turtle {
     if (kind === "food") target.eaten = true;
     else if (kind === "egg") target.alive = false;
     else if (kind === "baby") target.die();
-    this.eatTimer = 0.55;
+    else if (kind === "adult") {
+      target.bites = (target.bites || 0) + 1;
+      target.biteFlash = 0.4;
+      if (target.bites >= 3) target.die();
+    }
+    this.eatTimer = this.frenzy ? 0.3 : 0.55;
     this.meals++;
-    this.belly = Math.min(1, this.belly + (kind === "baby" ? 0.4 : kind === "egg" ? 0.15 : 0.28));
+    this.belly = Math.min(1, this.belly + (kind === "baby" ? 0.4 : kind === "egg" ? 0.15 : kind === "adult" ? 0.5 : 0.28));
     this.digestTimer = Math.max(this.digestTimer, 8 + this.meals * 3);
-    waterQuality = Math.max(0, waterQuality - 0.008);
-    nutrients = Math.min(1, nutrients + 0.015);
-    playBlip(220);
+    waterQuality = Math.max(0, waterQuality - (kind === "adult" ? 0.015 : 0.008));
+    nutrients = Math.min(1, nutrients + (kind === "adult" ? 0.03 : 0.015));
+    playBlip(kind === "adult" ? 160 : 220);
   }
   update(dt) {
     this.stateTimer -= dt;
     if (this.eatTimer > 0) this.eatTimer -= dt;
+    if (this.frenzy) {
+      this.frenzyTimer -= dt;
+      if (this.frenzyTimer <= 0) this.frenzy = false;
+      if (this.state === "surfaced" || this.state === "toSurface") {
+        this.state = "swim"; this.stateTimer = rand(3, 6);
+      }
+    }
     if (this.digestTimer > 0) {
       this.digestTimer -= dt;
       if (this.digestTimer <= 0) {
@@ -1099,20 +1126,20 @@ class Turtle {
         else { this.belly = 0; this.meals = 0; }
       }
     }
-    const isFull = this.belly > 0.7;
+    const isFull = this.belly > 0.7 && !this.frenzy;
     this.baskNeed -= dt;
-    this.peaceful = isFull || this.state === "surfaced" || this.state === "toSurface";
+    this.peaceful = (isFull || this.state === "surfaced" || this.state === "toSurface") && !this.frenzy;
 
-    if (this.baskNeed <= 0 && this.state === "swim") {
+    if (!this.frenzy && this.baskNeed <= 0 && this.state === "swim") {
       this.state = "toSurface"; this.stateTimer = 25; this.chasingFood = false;
     }
-    const found = (!this.peaceful && this.baskNeed > 0) ? this.findPrey() : null;
+    const found = (!this.peaceful && (this.baskNeed > 0 || this.frenzy)) ? this.findPrey() : null;
     this.chasingFood = false;
     if (found && this.state !== "surfaced" && this.eatTimer <= 0) {
       if (this.state === "diving") { this.state = "swim"; this.stateTimer = rand(3, 6); }
       this.chasingFood = true;
       this.tx = found.target.x; this.ty = found.target.y;
-      if (found.dist < (found.kind === "baby" ? 22 : 26)) {
+      if (found.dist < (found.kind === "baby" ? 22 : found.kind === "adult" ? 30 : 26)) {
         this.eat(found.target, found.kind);
         this.chasingFood = false;
       }
@@ -1148,7 +1175,7 @@ class Turtle {
       while (diff < -Math.PI) diff += Math.PI * 2;
       this.dir += diff * Math.min(1, dt * (this.chasingFood ? 3.4 : isFull ? 1.1 : 1.6));
       let mul = 1;
-      if (this.chasingFood) mul = 2.6;
+      if (this.chasingFood) mul = this.frenzy ? 3.6 : 2.6;
       else if (this.eatTimer > 0) mul = 0.35;
       else if (isFull) mul = 0.55;
       const step = Math.min(this.speed * mul * dt, dist);
@@ -1362,7 +1389,7 @@ function flashGestureToast(text) {
   gestureToastT = setTimeout(() => gestureToast.classList.remove("show"), 1100);
 }
 
-let tankFrozen = false;
+const FRENZY_DURATION = 14;
 
 /* —— 鱼缸手势识别：长按=菜单 / 点击=投食(多点多投) / 画圈=换水 / 画✅=开关过滤 / ←→划=修剪 / ↑划=昼夜 / ↓划=加鱼 —— */
 (function () {
@@ -1434,7 +1461,6 @@ let tankFrozen = false;
 
   function onDown(e) {
     if (menuOverlay.classList.contains("show")) return;
-    tankFrozen = false;
     tracking = true;
     longPressFired = false;
     downPt = localPos(e);
@@ -1482,8 +1508,9 @@ let tankFrozen = false;
       trimPlants();
       flashGestureToast("🌿 已修剪水草");
     } else if (g === "swipe-left") {
-      tankFrozen = true;
-      flashGestureToast("⏸ 画面已定格");
+      turtle.frenzy = true;
+      turtle.frenzyTimer = FRENZY_DURATION;
+      flashGestureToast("🦖 乌龟疯狂吃鱼模式！");
     } else if (g === "swipe-up") {
       isNight = !isNight; staticDirty = true; playBlip(isNight ? 300 : 700);
       flashGestureToast(isNight ? "🌙 夜晚模式" : "☀️ 白天模式");
@@ -1569,14 +1596,11 @@ let last = performance.now();
 const actors = [];
 function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
-  last = now;
-  if (!tankFrozen) {
-    t += dt;
-    updateBubbles(dt); updateFood(dt); updateEggs(dt);
-    updatePlants(dt); updateEco(dt);
-    turtle.update(dt);
-    for (let i = 0; i < fishes.length; i++) fishes[i].update(dt);
-  }
+  last = now; t += dt;
+  updateBubbles(dt); updateFood(dt); updateEggs(dt);
+  updatePlants(dt); updateEco(dt);
+  turtle.update(dt);
+  for (let i = 0; i < fishes.length; i++) fishes[i].update(dt);
   if (staticDirty) rebuildStaticLayer();
   ctx.clearRect(0, 0, W, H);
   drawWater();
