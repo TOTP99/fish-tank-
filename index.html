@@ -20,26 +20,11 @@ body{
           max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
 }
 #app{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  width:100%;max-width:440px;max-height:100%;gap:6px;
-  overflow:hidden;min-width:0;min-height:0;
+  display:flex;align-items:center;justify-content:center;
+  width:100%;height:100%;
 }
-@media (orientation:portrait){
-  #app{height:100%;}
-  #stage{max-height:calc(100% - 150px);}
-}
-@media (max-width:559px) and (orientation:landscape){
-  #app{flex-direction:row;gap:6px;max-width:100%;}
-  #stage{height:calc(100% - 8px);max-height:calc(100dvh - 20px);}
-  #sideDisplay,#sideControls{width:92px;padding:5px 4px;}
-  #sideControls button{font-size:9px;padding:5px 3px;min-width:0;}
-}
-#sideDisplay{order:2;flex:0 0 auto;width:100%;min-width:0;overflow:hidden}
-#stage{order:1}
-#sideControls{order:3;flex:0 0 auto;width:100%;min-width:0;overflow:hidden}
 #stage{
-  position:relative;width:auto;max-width:100%;height:min(58vh,480px);flex:0 0 auto;min-height:0;min-width:0;
-  aspect-ratio:4/5;
+  position:relative;flex:0 0 auto;min-height:0;min-width:0;
   border-radius:16px;padding:10px;
   background:linear-gradient(155deg,var(--frame-hi),var(--frame) 40%,#1a130c);
   box-shadow:0 14px 36px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);
@@ -48,8 +33,9 @@ body{
 #tankWrap{
   position:relative;width:100%;height:100%;border-radius:8px;overflow:hidden;
   box-shadow:inset 0 0 0 2px rgba(255,255,255,.08),inset 0 8px 24px rgba(0,0,0,.45);
+  touch-action:none;
 }
-canvas{display:block;width:100%;height:100%}
+canvas{display:block;width:100%;height:100%;touch-action:none}
 #hud{
   position:absolute;top:6px;left:0;right:0;
   display:flex;align-items:center;gap:6px;flex-wrap:wrap;
@@ -84,8 +70,15 @@ canvas{display:block;width:100%;height:100%}
   opacity:0;transition:opacity .35s;white-space:nowrap;
 }
 #wqAlert.show{opacity:1}
+#gestureToast{
+  position:absolute;left:50%;bottom:8%;transform:translateX(-50%);
+  pointer-events:none;z-index:6;font-size:12px;font-weight:800;color:#fff;
+  background:rgba(20,80,60,.85);padding:6px 14px;border-radius:12px;
+  opacity:0;transition:opacity .25s,transform .25s;white-space:nowrap;
+}
+#gestureToast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 #sideDisplay,#sideControls{
-  width:100%;border-radius:12px;padding:6px 8px;
+  width:100%;border-radius:12px;padding:8px 10px;
 }
 #sideControls{
   border:1px solid var(--gold-line);
@@ -95,8 +88,8 @@ canvas{display:block;width:100%;height:100%}
 #sideDisplay{
   border:1px solid transparent;background:transparent;box-shadow:none;
 }
-#sideDisplay{display:flex;flex-direction:column;gap:4px}
-#sideControls{display:flex;flex-direction:column;gap:5px}
+#sideDisplay{display:flex;flex-direction:column;gap:6px}
+#sideControls{display:flex;flex-direction:column;gap:7px}
 .ctrl-row{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:5px}
 button,.ctrl-stat{
   border:1px solid rgba(255,255,255,.12);border-radius:10px;
@@ -120,80 +113,44 @@ button.gold{background:linear-gradient(160deg,var(--gold),#a9782f);color:#231705
 .bar{width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.12);
   overflow:hidden;display:inline-block;vertical-align:middle}
 .bar>i{display:block;height:100%;border-radius:3px;transition:width .3s,background .3s}
-@media (orientation:landscape) and (min-width:560px){
-  body{padding:max(10px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right))
-              max(10px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}
-  #app{flex-direction:row;align-items:stretch;justify-content:center;
-    max-width:min(1100px,100%);max-height:100%;gap:12px}
-  #stage{order:2;width:auto;flex:0 1 auto;height:min(86vh,520px);max-height:86vh;
-    aspect-ratio:4/5;max-width:min(42vw,420px)}
-  #sideDisplay{order:1;width:min(200px,22vw);flex:0 0 auto;justify-content:center;padding:10px 8px;
-    border:1px solid var(--gold-line);background:linear-gradient(165deg,#1c1610,#120e0a);
-    box-shadow:0 4px 16px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04)}
-  #sideDisplay #titleWrap{margin-bottom:10px}
-  #sideControls{order:3;width:min(200px,22vw);flex:0 0 auto;justify-content:center;padding:10px 8px}
-  #sideControls .ctrl-row{flex-direction:column;align-items:stretch}
-  #sideControls button{justify-content:center;width:100%;font-size:11px;padding:7px 8px}
-  #wqMonitor{font-size:10px}
-  #popStatHud{font-size:11px}
-}
-
 /* professional aquarium console */
 #sideDisplay,#sideControls{background:linear-gradient(180deg,rgba(20,35,42,.96),rgba(8,20,27,.96));border:1px solid rgba(111,190,205,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 6px 18px rgba(0,0,0,.22)}
-.console-head{display:flex;justify-content:space-between;align-items:center;color:#a9dbe5;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
-.console-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
-.metric{background:rgba(0,0,0,.22);border:1px solid rgba(126,190,205,.15);border-radius:7px;padding:5px 6px;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:6px}
-.metric b{display:block;color:#e8f8fb;font-size:13px;line-height:1.2;white-space:nowrap}.metric span{display:block;color:#87aab3;font-size:9px;margin-top:0;text-align:right;white-space:nowrap}
+.console-head{display:flex;justify-content:space-between;align-items:center;color:#a9dbe5;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.console-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.metric{background:rgba(0,0,0,.22);border:1px solid rgba(126,190,205,.15);border-radius:7px;padding:6px 8px;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.metric b{display:block;color:#e8f8fb;font-size:15px;line-height:1.2;white-space:nowrap}.metric span{display:block;color:#87aab3;font-size:10px;margin-top:0;text-align:right;white-space:nowrap}
 .console-led{display:inline-block;width:6px;height:6px;border-radius:50%;background:#45e58a;box-shadow:0 0 8px #45e58a;margin-right:4px}
-#sideControls .ctrl-row{gap:5px}#sideControls button{border-color:rgba(120,190,205,.3);background:linear-gradient(180deg,#1b3c46,#10252d);color:#d9f4f7;font-weight:800}
+#sideControls .ctrl-row{gap:7px}#sideControls button{border-color:rgba(120,190,205,.3);background:linear-gradient(180deg,#1b3c46,#10252d);color:#d9f4f7;font-weight:800}
 
-/* 沉浸/全屏模式样式 */
-body.immersive #sideDisplay,
-body.immersive #sideControls {
-  display: none !important;
+/* —— 悬浮统一控制/显示菜单（三击鱼缸唤出，半透明） —— */
+#menuOverlay{
+  position:fixed;inset:0;z-index:50;
+  display:none;align-items:center;justify-content:center;
+  padding:16px;
 }
-body.immersive #app {
-  max-width: 100vw !important;
-  max-height: 100vh !important;
-  max-height: 100dvh !important;
-  gap: 0 !important;
+#menuOverlay.show{display:flex}
+#menuPanel{
+  position:relative;width:min(94vw,640px);max-height:92vh;max-height:92dvh;
+  overflow:auto;-webkit-overflow-scrolling:touch;
+  background:rgba(14,28,36,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(111,190,205,.45);border-radius:18px;
+  padding:14px 14px 18px;display:flex;flex-direction:column;gap:10px;
+  box-shadow:0 24px 70px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);
 }
-body.immersive #stage {
-  width: 100vw !important;
-  height: 100vh !important;
-  height: 100dvh !important;
-  max-width: 100% !important;
-  max-height: 100% !important;
-  border-radius: 0 !important;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left) !important;
+#menuPanel #sideDisplay,#menuPanel #sideControls{
+  background:rgba(10,22,28,.35);
+}
+#btnCloseMenu{
+  min-width:0;width:22px;height:22px;padding:0;border-radius:50%;
+  font-size:12px;line-height:1;background:rgba(255,255,255,.15);border:none;color:#e8f8fb;
+}
+@media (orientation:landscape) and (min-width:640px){
+  #menuPanel{display:grid;grid-template-columns:1fr 1fr;align-items:start;}
 }
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="sideDisplay">
-    <div class="console-head">
-      <span>◈ AQUA CONTROL</span>
-      <span>
-        <button type="button" id="btnImmersive" style="font-size:9px; padding:1px 5px; margin-right:4px; min-width:0; background:rgba(255,255,255,.15); border:none; color:#a9dbe5; border-radius:4px; cursor:pointer;">⛶ 最大化</button>
-        <i class="console-led"></i>ONLINE
-      </span>
-    </div>
-    <div id="popStatHud">🐟 3</div>
-    <div id="wqMonitor">水质监测 · 优秀</div>
-    <div class="console-grid">
-      <div class="metric"><b id="tempRead">24.0°C</b><span>TEMP</span></div>
-      <div class="metric"><b id="phRead">7.2</b><span>pH</span></div>
-      <div class="metric"><b id="nutRead">25%</b><span>NUTRIENTS</span></div>
-      <div class="metric"><b id="oxRead">85%</b><span>OXYGEN</span></div>
-    </div>
-    <div class="ctrl-row">
-      <button type="button" id="btnAddFish" title="添加大金鱼">🐟+</button>
-      <span class="ctrl-stat">水质 <span class="bar"><i id="wqBar"></i></span></span>
-      <button type="button" id="btnFeed" class="gold" title="投食">🍤 投食</button>
-      <span class="ctrl-stat">氧气 <span class="bar"><i id="oxBar"></i></span></span>
-    </div>
-  </div>
   <div id="stage">
     <div id="tankWrap">
       <canvas id="tank"></canvas>
@@ -204,14 +161,46 @@ body.immersive #stage {
         </div>
       </div>
       <div id="wqAlert"></div>
+      <div id="gestureToast"></div>
     </div>
   </div>
-  <div id="sideControls">
-    <div class="ctrl-row">
-      <button id="btnFilter">🌀 过滤</button>
-      <button id="btnWater">💧 换水</button>
-      <button id="btnCycle">🌗 昼/夜</button>
-      <button id="btnTrim">🌿 修剪</button>
+</div>
+
+<div id="menuOverlay">
+  <div id="menuPanel">
+    <div id="sideDisplay">
+      <div class="console-head">
+        <span>◈ AQUA CONTROL</span>
+        <span>
+          <i class="console-led"></i>ONLINE
+          <button type="button" id="btnCloseMenu" title="关闭" style="margin-left:6px;">✕</button>
+        </span>
+      </div>
+      <div id="popStatHud">🐟 3</div>
+      <div id="wqMonitor">水质监测 · 优秀</div>
+      <div class="console-grid">
+        <div class="metric"><b id="tempRead">24.0°C</b><span>TEMP</span></div>
+        <div class="metric"><b id="phRead">7.2</b><span>pH</span></div>
+        <div class="metric"><b id="nutRead">25%</b><span>NUTRIENTS</span></div>
+        <div class="metric"><b id="oxRead">85%</b><span>OXYGEN</span></div>
+      </div>
+      <div class="ctrl-row">
+        <button type="button" id="btnAddFish" title="添加大金鱼">🐟+</button>
+        <span class="ctrl-stat">水质 <span class="bar"><i id="wqBar"></i></span></span>
+        <button type="button" id="btnFeed" class="gold" title="投食">🍤 投食</button>
+        <span class="ctrl-stat">氧气 <span class="bar"><i id="oxBar"></i></span></span>
+      </div>
+    </div>
+    <div id="sideControls">
+      <div class="ctrl-row">
+        <button id="btnFilter">🌀 过滤</button>
+        <button id="btnWater">💧 换水</button>
+        <button id="btnCycle">🌗 昼/夜</button>
+        <button id="btnTrim">🌿 修剪</button>
+      </div>
+      <div class="ctrl-row" style="font-size:9px;opacity:.75;font-weight:600;justify-content:center;text-align:center;line-height:1.5;">
+        <span>手势提示：长按 = 菜单 &nbsp;·&nbsp; 点击 = 投食(可连点多投) &nbsp;·&nbsp; 画圈 = 换水 &nbsp;·&nbsp; 画✅ = 开/关过滤 &nbsp;·&nbsp; ←划→ = 修剪 &nbsp;·&nbsp; ↓划↑ = 昼/夜 &nbsp;·&nbsp; ↑划↓ = 加鱼</span>
+      </div>
     </div>
   </div>
 </div>
@@ -1181,50 +1170,14 @@ document.getElementById("btnFilter").addEventListener("click", toggleFilter);
 document.getElementById("btnTrim").addEventListener("click", trimPlants);
 document.getElementById("btnAddFish").addEventListener("click", addAdultGoldfish);
 
-/* —— 沉浸/最大化模式切换 —— */
-const btnImmersive = document.getElementById("btnImmersive");
-if (btnImmersive) {
-  btnImmersive.addEventListener("click", () => {
-    document.body.classList.toggle("immersive");
-    const isImmersive = document.body.classList.contains("immersive");
-    btnImmersive.textContent = isImmersive ? "✖ 退出" : "⛶ 最大化";
-    setTimeout(() => {
-      window.dispatchEvent(new Event('resize'));
-    }, 50);
-  });
-}
-
+/* —— 鱼缸动态尺寸：始终按最大可用空间的95%显示（无侧栏占用） —— */
 (function () {
-  const btnAddFish = document.getElementById("btnAddFish");
-  const btnFeed = document.getElementById("btnFeed");
-  const displayHome = { parent: btnAddFish.parentNode, next: btnAddFish.nextSibling };
-  const feedHome = { parent: btnFeed.parentNode, next: btnFeed.nextSibling };
-  const controlsRow = document.querySelector("#sideControls .ctrl-row");
-  const titleWrap = document.getElementById("titleWrap");
-  const hud = document.getElementById("hud");
-  const titleHome = { parent: titleWrap.parentNode, next: titleWrap.nextSibling };
-  const sideDisplay = document.getElementById("sideDisplay");
-  const sideControls = document.getElementById("sideControls");
   const app = document.getElementById("app");
   const stage = document.getElementById("stage");
-  const mq = window.matchMedia("(orientation: landscape) and (min-width: 560px)");
-
-  function relocate(isLandscape) {
-    if (isLandscape) {
-      controlsRow.insertBefore(btnAddFish, controlsRow.firstChild);
-      controlsRow.insertBefore(btnFeed, btnAddFish.nextSibling);
-      sideDisplay.insertBefore(titleWrap, sideDisplay.firstChild);
-    } else {
-      displayHome.parent.insertBefore(btnAddFish, displayHome.next);
-      feedHome.parent.insertBefore(btnFeed, feedHome.next);
-      titleHome.parent.insertBefore(titleWrap, titleHome.next);
-    }
-  }
 
   let fitQueued = false;
   function fitStage() {
     fitQueued = false;
-    const isLandscape = mq.matches;
     const bs = getComputedStyle(document.body);
     const padH = (parseFloat(bs.paddingTop) || 0) + (parseFloat(bs.paddingBottom) || 0);
     const padW = (parseFloat(bs.paddingLeft) || 0) + (parseFloat(bs.paddingRight) || 0);
@@ -1233,25 +1186,9 @@ if (btnImmersive) {
     const vh = viewport ? viewport.height : window.innerHeight;
     const availH = vh - padH;
     const availW = vw - padW;
-    const as = getComputedStyle(app);
-    const appMaxW = Math.min(availW, parseFloat(as.maxWidth) || availW);
-    let maxW, maxH;
-    if (isLandscape) {
-      const gapCol = parseFloat(as.columnGap) || parseFloat(as.gap) || 12;
-      const sdW = sideDisplay.getBoundingClientRect().width;
-      const scW = sideControls.getBoundingClientRect().width;
-      maxW = appMaxW - sdW - scW - gapCol * 2;
-      maxH = availH;
-    } else {
-      const gapRow = parseFloat(as.rowGap) || parseFloat(as.gap) || 6;
-      const sdH = sideDisplay.getBoundingClientRect().height;
-      const scH = sideControls.getBoundingClientRect().height;
-      maxW = appMaxW;
-      maxH = availH - sdH - scH - gapRow * 2;
-    }
     const ratio = 4 / 5;
-    let w = Math.max(0, maxW), h = w / ratio;
-    if (h > maxH) { h = Math.max(0, maxH); w = h * ratio; }
+    let w = Math.max(0, availW), h = w / ratio;
+    if (h > availH) { h = Math.max(0, availH); w = h * ratio; }
     w *= 0.95; h *= 0.95;
     if (w < 60 || h < 60) return;
     stage.style.width = Math.floor(w) + "px";
@@ -1259,36 +1196,170 @@ if (btnImmersive) {
     scheduleResize();
   }
 
-  function applyLayout(isLandscape) {
-    relocate(isLandscape);
-    fitStage();
-  }
-
-  applyLayout(mq.matches);
-  if (mq.addEventListener) mq.addEventListener("change", e => applyLayout(e.matches));
-  else mq.addListener(e => applyLayout(e.matches));
   function queueFit(){
     if (fitQueued) return;
     fitQueued = true;
     requestAnimationFrame(fitStage);
   }
+  fitStage();
   window.addEventListener("resize", queueFit);
   window.addEventListener("orientationchange", () => setTimeout(queueFit, 80));
   if (window.visualViewport) window.visualViewport.addEventListener("resize", queueFit);
-  if (window.ResizeObserver) {
-    const ro = new ResizeObserver(() => queueFit());
-    ro.observe(sideDisplay);
-    ro.observe(sideControls);
-  }
 })();
 
-canvas.addEventListener("click", e => {
-  const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left, y = e.clientY - rect.top;
-  if (y < surfaceY() || y > floorY()) return;
-  dropFood(x, surfaceY() + 6);
-  playBlip(560);
-});
+/* —— 悬浮统一菜单：长按唤出 / 仅右上角✕关闭 —— */
+const menuOverlay = document.getElementById("menuOverlay");
+function openMenu() { menuOverlay.classList.add("show"); }
+function closeMenu() { menuOverlay.classList.remove("show"); }
+document.getElementById("btnCloseMenu").addEventListener("click", closeMenu);
+
+/* —— 手势反馈提示 —— */
+const gestureToast = document.getElementById("gestureToast");
+let gestureToastT = 0;
+function flashGestureToast(text) {
+  gestureToast.textContent = text;
+  gestureToast.classList.add("show");
+  clearTimeout(gestureToastT);
+  gestureToastT = setTimeout(() => gestureToast.classList.remove("show"), 1100);
+}
+
+/* —— 鱼缸手势识别：长按=菜单 / 点击=投食(多点多投) / 画圈=换水 / 画✅=开关过滤 / ←→划=修剪 / ↑划=昼夜 / ↓划=加鱼 —— */
+(function () {
+  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const TAP_MOVE_LIMIT = 14;     // 移动小于此值视为"点击"而非"划线"
+  const LONG_PRESS_MS = 550;     // 长按唤出菜单所需时长
+  const MIN_SWIPE = 55;          // 直线划动的最小位移
+
+  let tracking = false;
+  let points = [];
+  let downPt = null;
+  let longPressTimer = null;
+  let longPressFired = false;
+
+  function localPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }
+
+  function classifyGesture(pts) {
+    const n = pts.length;
+    if (n < 8) return null;
+    let cx = 0, cy = 0;
+    for (const p of pts) { cx += p.x; cy += p.y; }
+    cx /= n; cy /= n;
+    let minR = Infinity, maxR = 0;
+    for (const p of pts) {
+      const r = Math.hypot(p.x - cx, p.y - cy);
+      if (r < minR) minR = r;
+      if (r > maxR) maxR = r;
+    }
+    let totalAngle = 0;
+    for (let i = 1; i < n; i++) {
+      const a1 = Math.atan2(pts[i - 1].y - cy, pts[i - 1].x - cx);
+      const a2 = Math.atan2(pts[i].y - cy, pts[i].x - cx);
+      let d = a2 - a1;
+      while (d > Math.PI) d -= 2 * Math.PI;
+      while (d < -Math.PI) d += 2 * Math.PI;
+      totalAngle += d;
+    }
+    const closeLoop = dist(pts[0], pts[n - 1]) < Math.max(45, maxR * 0.7);
+    const roundness = maxR > 0 ? minR / maxR : 0;
+    if (Math.abs(totalAngle) > Math.PI * 1.25 && closeLoop && roundness > 0.3 && maxR > 16) {
+      return "circle";
+    }
+    let vi = 0;
+    for (let i = 1; i < n; i++) if (pts[i].y > pts[vi].y) vi = i;
+    const start = pts[0], vertex = pts[vi], end = pts[n - 1];
+    const seg1dy = vertex.y - start.y;
+    const seg2dx = end.x - vertex.x, seg2dy = end.y - vertex.y;
+    const seg1len = Math.hypot(vertex.x - start.x, seg1dy);
+    const seg2len = Math.hypot(seg2dx, seg2dy);
+    const vertexMid = vi > n * 0.06 && vi < n * 0.8;
+    if (vertexMid && seg1dy > 4 && seg2dy < -4 && seg2len > seg1len * 0.85) {
+      return "check";
+    }
+    // 直线划动：左右修剪 / 上下昼夜 / 上下加鱼
+    let pathLen = 0;
+    for (let i = 1; i < n; i++) pathLen += dist(pts[i - 1], pts[i]);
+    const dx = end.x - start.x, dy = end.y - start.y;
+    const netDist = Math.hypot(dx, dy);
+    const straightness = pathLen > 0 ? netDist / pathLen : 0;
+    if (straightness > 0.75 && netDist > MIN_SWIPE) {
+      if (Math.abs(dx) > Math.abs(dy) * 1.5 && dx > 0) return "swipe-right";
+      if (Math.abs(dy) > Math.abs(dx) * 1.5) return dy < 0 ? "swipe-up" : "swipe-down";
+    }
+    return null;
+  }
+
+  function onDown(e) {
+    if (menuOverlay.classList.contains("show")) return;
+    tracking = true;
+    longPressFired = false;
+    downPt = localPos(e);
+    points = [downPt];
+    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+    clearTimeout(longPressTimer);
+    longPressTimer = setTimeout(() => {
+      longPressFired = true;
+      openMenu();
+    }, LONG_PRESS_MS);
+  }
+  function onMove(e) {
+    if (!tracking || longPressFired) return;
+    const p = localPos(e);
+    const last = points[points.length - 1];
+    if (dist(last, p) > 3) points.push(p);
+    if (dist(downPt, p) > TAP_MOVE_LIMIT) {
+      clearTimeout(longPressTimer);
+      e.preventDefault();
+    }
+  }
+  function onUp(e) {
+    if (!tracking) return;
+    tracking = false;
+    clearTimeout(longPressTimer);
+    if (longPressFired) { points = []; return; }
+    const upPt = localPos(e);
+    let maxSpread = 0;
+    for (const p of points) maxSpread = Math.max(maxSpread, dist(downPt, p));
+    if (maxSpread < TAP_MOVE_LIMIT) {
+      // 点击：每点一下投一粒食物，多点多投
+      dropFood(upPt.x, surfaceY() + 6);
+      playBlip(560);
+      points = [];
+      return;
+    }
+    const g = classifyGesture(points);
+    if (g === "circle") {
+      changeWater();
+      flashGestureToast("🔄 已自动换水");
+    } else if (g === "check") {
+      toggleFilter();
+      flashGestureToast(filterOn ? "✅ 已开启过滤" : "⏸ 已关闭过滤");
+    } else if (g === "swipe-right") {
+      trimPlants();
+      flashGestureToast("🌿 已修剪水草");
+    } else if (g === "swipe-up") {
+      isNight = !isNight; staticDirty = true; playBlip(isNight ? 300 : 700);
+      flashGestureToast(isNight ? "🌙 夜晚模式" : "☀️ 白天模式");
+    } else if (g === "swipe-down") {
+      addAdultGoldfish();
+      flashGestureToast("🐟 已添加金鱼");
+    }
+    points = [];
+  }
+  function onCancel() {
+    tracking = false;
+    longPressFired = false;
+    clearTimeout(longPressTimer);
+    points = [];
+  }
+
+  canvas.addEventListener("pointerdown", onDown);
+  canvas.addEventListener("pointermove", onMove, { passive: false });
+  canvas.addEventListener("pointerup", onUp);
+  canvas.addEventListener("pointercancel", onCancel);
+})();
 
 const wqBar = document.getElementById("wqBar");
 const oxBar = document.getElementById("oxBar");
