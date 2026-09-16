@@ -11,27 +11,29 @@
   --gold:#e0b25a;--gold-line:rgba(224,178,90,.55);
 }
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:#0a0d10;overflow:hidden;
+html,body{margin:0;height:100%;width:100%;background:#0a0d10;overflow:hidden;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 body{
   display:flex;align-items:center;justify-content:center;
-  min-height:100vh;min-height:100dvh;
-  padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right))
-          max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
+  height:100vh;height:100dvh;max-height:100dvh;
+  padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right))
+          max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
 }
 #app{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  width:100%;max-width:440px;max-height:100%;gap:8px;
+  width:100%;max-width:440px;max-height:100%;gap:6px;
+  overflow:hidden;min-width:0;
 }
-#sideDisplay{order:2}
+#sideDisplay{order:2;flex:0 0 auto;width:100%;min-width:0;overflow:hidden}
 #stage{order:1}
-#sideControls{order:3}
+#sideControls{order:3;flex:0 0 auto;width:100%;min-width:0;overflow:hidden}
 #stage{
-  position:relative;width:100%;flex:0 1 auto;min-height:0;
-  aspect-ratio:4/5;max-height:min(68vh,580px);
+  position:relative;width:100%;flex:1 1 auto;min-height:0;min-width:0;
+  aspect-ratio:4/5;max-height:min(58vh,480px);
   border-radius:16px;padding:10px;
   background:linear-gradient(155deg,var(--frame-hi),var(--frame) 40%,#1a130c);
   box-shadow:0 14px 36px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);
+  overflow:hidden;
 }
 #tankWrap{
   position:relative;width:100%;height:100%;border-radius:8px;overflow:hidden;
@@ -44,23 +46,26 @@ canvas{display:block;width:100%;height:100%}
   padding:0 6px;pointer-events:none;
 }
 #titleWrap{
-  display:flex;flex-direction:column;align-items:flex-start;gap:1px;
-  background:rgba(0,0,0,.3);padding:3px 8px;border-radius:10px;
+  display:flex;flex-direction:column;align-items:center;gap:1px;
+  background:rgba(0,0,0,.3);padding:3px 10px;border-radius:10px;
+  text-align:center;
 }
-#title{color:var(--gold);font-weight:800;font-size:11px;letter-spacing:.3px;
-  text-shadow:0 1px 3px rgba(0,0,0,.6)}
-#credit{color:var(--gold);font-size:8px;font-weight:600;opacity:.85;letter-spacing:.6px}
-#btnAddFish,#hud #btnFeed{
-  pointer-events:auto;border:1px solid rgba(255,200,100,.45);border-radius:10px;
-  padding:3px 8px;font-size:10px;font-weight:800;cursor:pointer;
+#title{color:var(--gold);font-weight:800;font-size:11px;letter-spacing:.35px;
+  text-shadow:0 1px 3px rgba(0,0,0,.6);line-height:1.2}
+#credit{color:var(--gold);font-size:8px;font-weight:600;opacity:.85;
+  letter-spacing:.12em;line-height:1.2;text-align:center}
+#btnAddFish{
+  border:1px solid rgba(255,200,100,.45);border-radius:10px;
+  padding:4px 8px;font-size:10px;font-weight:800;cursor:pointer;
   background:linear-gradient(160deg,var(--gold),#a9782f);color:#231705;
 }
-#btnAddFish{padding:4px 8px}
-#btnAddFish:active,#hud #btnFeed:active{transform:scale(.94)}
+#btnAddFish:active{transform:scale(.94)}
 #popStatHud{
   font-size:10px;font-weight:700;color:var(--ink);
-  background:rgba(0,0,0,.3);padding:3px 7px;border-radius:8px;
+  background:rgba(0,0,0,.35);padding:4px 8px;border-radius:8px;
   text-shadow:0 1px 2px rgba(0,0,0,.6);
+  line-height:1.35;word-break:break-word;
+  max-width:100%;min-height:1.35em;overflow:hidden;
 }
 #wqAlert{
   position:absolute;left:50%;top:12%;transform:translateX(-50%);
@@ -82,14 +87,16 @@ button,.ctrl-stat{
   border:1px solid rgba(255,255,255,.12);border-radius:10px;
   padding:5px 8px;font-size:10px;font-weight:700;cursor:pointer;
   background:linear-gradient(160deg,#2c2115,#1c150d);color:var(--ink);
-  box-shadow:0 2px 6px rgba(0,0,0,.3);transition:transform .12s;
-  display:inline-flex;align-items:center;gap:4px;line-height:1.2;
+  box-shadow:0 2px 6px rgba(0,0,0,.3);transition:transform .12s,color .15s,border-color .15s;
+  display:inline-flex;align-items:center;justify-content:center;gap:4px;line-height:1.2;
+  white-space:nowrap;flex:0 0 auto;min-width:4.5em;
 }
 button:active{transform:scale(.94)}
 button.gold{background:linear-gradient(160deg,var(--gold),#a9782f);color:#231705;border-color:var(--gold)}
-.ctrl-stat{cursor:default;user-select:none}
+#btnFilter{min-width:5.5em}
+.ctrl-stat{cursor:default;user-select:none;min-width:0}
 #wqMonitor{font-size:9px;font-weight:700;color:var(--ink);line-height:1.35;padding:2px;
-  text-shadow:0 1px 2px rgba(0,0,0,.5)}
+  text-shadow:0 1px 2px rgba(0,0,0,.5);min-height:3.9em;overflow:hidden}
 #wqMonitor.warn{color:#e8c45a}
 #wqMonitor.danger{color:#ff8a7a;animation:pulseDanger 1.2s ease-in-out infinite}
 @keyframes pulseDanger{0%,100%{opacity:1}50%{opacity:.75}}
@@ -120,6 +127,7 @@ button.gold{background:linear-gradient(160deg,var(--gold),#a9782f);color:#231705
     <div class="ctrl-row">
       <button type="button" id="btnAddFish" title="添加大金鱼">🐟+</button>
       <span class="ctrl-stat">水质 <span class="bar"><i id="wqBar"></i></span></span>
+      <button type="button" id="btnFeed" class="gold" title="投食">🍤 投食</button>
       <span class="ctrl-stat">氧气 <span class="bar"><i id="oxBar"></i></span></span>
     </div>
   </div>
@@ -131,7 +139,6 @@ button.gold{background:linear-gradient(160deg,var(--gold),#a9782f);color:#231705
           <span id="title">🐢 生态鱼缸</span>
           <span id="credit">TP制作🐠</span>
         </div>
-        <button type="button" id="btnFeed" class="gold" title="投食">🍤 投食</button>
       </div>
       <div id="wqAlert"></div>
     </div>
@@ -155,17 +162,26 @@ const staticCanvas = document.createElement("canvas");
 const staticCtx = staticCanvas.getContext("2d");
 let staticDirty = true;
 
+let _resizeT = 0;
 function resize() {
   const rect = canvas.parentElement.getBoundingClientRect();
-  DPR = Math.min(window.devicePixelRatio || 1, 2);
-  W = rect.width; H = rect.height;
+  const nw = Math.max(1, Math.floor(rect.width));
+  const nh = Math.max(1, Math.floor(rect.height));
+  const ndpr = Math.min(window.devicePixelRatio || 1, 2);
+  if (nw === W && nh === H && ndpr === DPR) return;
+  DPR = ndpr; W = nw; H = nh;
   canvas.width = W * DPR; canvas.height = H * DPR;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   staticCanvas.width = W * DPR; staticCanvas.height = H * DPR;
   staticCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
   staticDirty = true;
 }
-window.addEventListener("resize", resize);
+function scheduleResize() {
+  clearTimeout(_resizeT);
+  _resizeT = setTimeout(resize, 50);
+}
+window.addEventListener("resize", scheduleResize);
+window.addEventListener("orientationchange", scheduleResize);
 resize();
 
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -680,7 +696,9 @@ class Goldfish {
     const step = Math.min(speed * dt, dist);
     this.x = clamp(this.x + Math.cos(this.dir) * step, 20, W - 20);
     this.y = clamp(this.y + Math.sin(this.dir) * step, surfaceY() + 16, floorY() - 10);
-    this.wiggle += dt * (6 + speed * 0.15);
+    // swim cycle: faster when fleeing / chasing food
+    const animRate = this.fleeing ? 14 : (this.hunger < 0.85 && foods.some(f => !f.eaten) ? 10 : 6.5);
+    this.wiggle += dt * (animRate + speed * 0.12);
     if (this.hunger > 0.5) {
       waterQuality = Math.max(0, waterQuality - 0.0015 * dt);
       nutrients = Math.min(1, nutrients + 0.002 * dt);
@@ -701,34 +719,55 @@ class Goldfish {
     const sick = stress > 0.35 || waterQuality < 0.3 || this.hunger < 0.15;
     const gasp = oxygen < 0.35 || stress > 0.55;
     const starving = this.hunger < 0.2;
+    const w = this.wiggle;
+    // swim cycle amplitudes
+    const bodyWave = Math.sin(w) * (0.07 + stress * 0.06);
+    const tailAmp = this.fleeing ? 0.85 : 0.55;
+    const tailWag = Math.sin(w * 1.8) * tailAmp;
+    const tailWag2 = Math.sin(w * 1.8 + 0.6) * tailAmp * 0.7;
+    const dorsalWag = Math.sin(w * 1.3) * 0.12;
+    const pectoral = Math.sin(w * 2.4) * 0.45;
+    const bob = Math.sin(w * 0.7) * (this.fleeing ? 1.2 : 0.6);
 
     ctx.save();
-    ctx.translate(this.x, this.y);
+    ctx.translate(this.x, this.y + bob);
     const flip = Math.cos(this.dir) < 0;
     ctx.scale(flip ? -1 : 1, 1);
-    ctx.rotate(Math.sin(this.wiggle) * (0.06 + stress * 0.08));
+    ctx.rotate(bodyWave + Math.sin(this.dir) * 0.04);
 
+    const colL = sick ? "#c0a060" : this.hue.light;
+    const colD = sick ? "#a08040" : this.hue.dark;
     const bodyGrad = ctx.createLinearGradient(-s, 0, s, 0);
-    bodyGrad.addColorStop(0, sick ? "#a08040" : this.hue.dark);
-    bodyGrad.addColorStop(1, sick ? "#c0a060" : this.hue.light);
-    const tailWag = Math.sin(this.wiggle * 1.6) * 0.5;
-    ctx.fillStyle = sick ? "#c0a060" : this.hue.light;
+    bodyGrad.addColorStop(0, colD);
+    bodyGrad.addColorStop(0.55, colL);
+    bodyGrad.addColorStop(1, colL);
+
+    // caudal fin — two lobes, out of phase
+    ctx.fillStyle = colL;
     ctx.beginPath();
-    ctx.moveTo(-s * 0.9, 0);
-    ctx.quadraticCurveTo(-s * 1.6, -s * 0.9 + tailWag * s * 0.4, -s * 2.1, tailWag * s * 0.9);
-    ctx.quadraticCurveTo(-s * 1.6, s * 0.9 + tailWag * s * 0.4, -s * 0.9, 0);
+    ctx.moveTo(-s * 0.85, 0);
+    ctx.quadraticCurveTo(-s * 1.45, -s * (0.75 + tailWag * 0.15), -s * (2.0 + Math.abs(tailWag) * 0.15), -s * 0.15 + tailWag * s * 0.85);
+    ctx.quadraticCurveTo(-s * 1.5, -s * 0.05, -s * 0.9, 0);
     ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.85, 0);
+    ctx.quadraticCurveTo(-s * 1.45, s * (0.75 - tailWag2 * 0.15), -s * (2.0 + Math.abs(tailWag2) * 0.15), s * 0.15 + tailWag2 * s * 0.85);
+    ctx.quadraticCurveTo(-s * 1.5, s * 0.05, -s * 0.9, 0);
+    ctx.fill();
+
+    // body with slight squash from wave
+    const bodyH = s * (0.70 + Math.sin(w * 2) * 0.03);
     ctx.fillStyle = bodyGrad;
-    ctx.beginPath(); ctx.ellipse(0, 0, s * 0.95, s * 0.72, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0, 0, s * 0.95, bodyH, 0, 0, Math.PI * 2); ctx.fill();
     if (stress > 0.25) {
       ctx.fillStyle = `rgba(180,90,40,${stress * 0.22})`;
-      ctx.beginPath(); ctx.ellipse(0, 0, s * 0.95, s * 0.72, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(0, 0, s * 0.95, bodyH, 0, 0, Math.PI * 2); ctx.fill();
     }
     if (this.armor > 0.15 && this.stage === "adult") {
       const a = this.armor;
       ctx.strokeStyle = `rgba(220,200,120,${0.35 + a * 0.5})`;
       ctx.lineWidth = 1.2 + a;
-      ctx.beginPath(); ctx.ellipse(0, 0, s * 0.98, s * 0.75, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(0, 0, s * 0.98, bodyH + s * 0.03, 0, 0, Math.PI * 2); ctx.stroke();
       ctx.fillStyle = `rgba(255,230,150,${0.12 + a * 0.25})`;
       for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) {
         if (!i && !j) continue;
@@ -740,16 +779,38 @@ class Goldfish {
       ctx.beginPath(); ctx.ellipse(-s * 0.2, -s * 0.2, s * 0.3, s * 0.22, 0.3, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.ellipse(s * 0.3, s * 0.15, s * 0.22, s * 0.16, -0.4, 0, Math.PI * 2); ctx.fill();
     }
-    ctx.fillStyle = sick ? "#c0a060" : this.hue.light;
+
+    // dorsal fin
+    ctx.fillStyle = colL;
     ctx.beginPath();
-    ctx.moveTo(-s * 0.1, -s * 0.6);
-    ctx.quadraticCurveTo(s * 0.1, -s * 1.15, s * 0.35, -s * 0.55);
-    ctx.quadraticCurveTo(s * 0.05, -s * 0.7, -s * 0.1, -s * 0.6);
+    ctx.moveTo(-s * 0.15, -bodyH * 0.85);
+    ctx.quadraticCurveTo(s * 0.05, -bodyH * (1.45 + dorsalWag), s * 0.4, -bodyH * 0.75);
+    ctx.quadraticCurveTo(s * 0.1, -bodyH * 0.95, -s * 0.15, -bodyH * 0.85);
     ctx.fill();
-    const finWag = Math.sin(this.wiggle * 2.2) * 0.3 + 0.3;
+
+    // anal fin
     ctx.beginPath();
-    ctx.ellipse(s * 0.05, s * 0.55, s * 0.32, s * 0.16, 0.9 + finWag, 0, Math.PI * 2);
+    ctx.moveTo(-s * 0.1, bodyH * 0.8);
+    ctx.quadraticCurveTo(s * 0.05, bodyH * (1.25 - dorsalWag * 0.5), s * 0.3, bodyH * 0.7);
+    ctx.quadraticCurveTo(s * 0.05, bodyH * 0.9, -s * 0.1, bodyH * 0.8);
     ctx.fill();
+
+    // pectoral fins (both sides, flap)
+    for (const side of [-1, 1]) {
+      const ang = side * (0.85 + pectoral * 0.5);
+      ctx.save();
+      ctx.translate(s * 0.1, side * bodyH * 0.35);
+      ctx.rotate(ang);
+      ctx.fillStyle = colL;
+      ctx.globalAlpha = 0.85;
+      ctx.beginPath();
+      ctx.ellipse(s * 0.2, 0, s * 0.38, s * 0.14, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+
+    // telescope eyes
     for (const side of [-1, 1]) {
       const ex = s * (this.stage === "baby" ? 0.5 : 0.58);
       const ey = side * s * (this.stage === "baby" ? 0.28 : 0.34);
@@ -759,7 +820,19 @@ class Goldfish {
       const pr = er * (this.fleeing ? 0.62 : (starving ? 0.35 : 0.52));
       ctx.fillStyle = "#191410";
       ctx.beginPath(); ctx.arc(ex + er * 0.25, ey, pr, 0, Math.PI * 2); ctx.fill();
+      if (!sick) {
+        ctx.fillStyle = "rgba(255,255,255,.8)";
+        ctx.beginPath(); ctx.arc(ex + er * 0.05, ey - er * 0.25, er * 0.16, 0, Math.PI * 2); ctx.fill();
+      }
     }
+
+    // mouth open pulse when eating / fleeing
+    if (this.fleeing || gasp) {
+      const mo = 1.2 + Math.sin(w * 4) * 0.8;
+      ctx.fillStyle = "rgba(40,20,20,.55)";
+      ctx.beginPath(); ctx.ellipse(s * 0.92, 0, mo, mo * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+    }
+
     if (gasp) {
       for (let i = 0; i < 1 + (stress > 0.7 ? 1 : 0); i++) {
         const bx = s * 0.95 + Math.sin(t * 5 + i * 2) * 3;
@@ -1014,7 +1087,8 @@ function changeWater() {
 function toggleFilter() {
   filterOn = !filterOn;
   const btn = document.getElementById("btnFilter");
-  btn.textContent = filterOn ? "🌀 过滤·开" : "🌀 过滤";
+  // fixed-width label avoids layout shift on toggle
+  btn.textContent = filterOn ? "🌀 开过滤" : "🌀 过滤";
   btn.style.borderColor = filterOn ? "#3dcc7a" : "";
   btn.style.color = filterOn ? "#3dcc7a" : "";
   playBlip(filterOn ? 500 : 280);
