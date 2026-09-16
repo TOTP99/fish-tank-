@@ -25,15 +25,28 @@ body{
 }
 #stage{
   position:relative;flex:0 0 auto;min-height:0;min-width:0;
-  border-radius:16px;padding:10px;
-  background:linear-gradient(155deg,var(--frame-hi),var(--frame) 40%,#1a130c);
-  box-shadow:0 14px 36px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);
+  border-radius:22px;padding:3px;
+  background:linear-gradient(160deg,rgba(255,255,255,.14),rgba(255,255,255,.02) 30%,rgba(0,0,0,.3));
+  box-shadow:
+    0 36px 70px -14px rgba(0,0,0,.7),
+    0 12px 28px rgba(0,0,0,.55),
+    0 0 0 1px rgba(255,255,255,.06),
+    inset 0 1px 0 rgba(255,255,255,.18),
+    inset 0 -3px 8px rgba(0,0,0,.35);
   overflow:hidden;
 }
 #tankWrap{
-  position:relative;width:100%;height:100%;border-radius:8px;overflow:hidden;
-  box-shadow:inset 0 0 0 2px rgba(255,255,255,.08),inset 0 8px 24px rgba(0,0,0,.45);
+  position:relative;width:100%;height:100%;border-radius:19px;overflow:hidden;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.12),
+    inset 0 10px 30px rgba(0,0,0,.5),
+    inset 0 -6px 16px rgba(0,0,0,.35);
   touch-action:none;
+}
+#tankWrap::before{
+  content:"";position:absolute;inset:0;z-index:5;pointer-events:none;
+  background:linear-gradient(115deg,rgba(255,255,255,.18) 0%,rgba(255,255,255,.06) 14%,transparent 30%,transparent 78%,rgba(255,255,255,.05) 100%);
+  mix-blend-mode:screen;
 }
 canvas{display:block;width:100%;height:100%;touch-action:none}
 #hud{
@@ -156,7 +169,6 @@ button.gold{background:linear-gradient(160deg,var(--gold),#a9782f);color:#231705
       <canvas id="tank"></canvas>
       <div id="hud">
         <div id="titleWrap">
-          <span id="title">🐢 生态鱼缸</span>
           <span id="credit">TP制作🐠</span>
         </div>
       </div>
@@ -199,7 +211,7 @@ button.gold{background:linear-gradient(160deg,var(--gold),#a9782f);color:#231705
         <button id="btnTrim">🌿 修剪</button>
       </div>
       <div class="ctrl-row" style="font-size:9px;opacity:.75;font-weight:600;justify-content:center;text-align:center;line-height:1.5;">
-        <span>手势提示：长按 = 菜单 &nbsp;·&nbsp; 点击 = 投食(可连点多投) &nbsp;·&nbsp; 画圈 = 换水 &nbsp;·&nbsp; 画✅ = 开/关过滤 &nbsp;·&nbsp; ←划→ = 修剪 &nbsp;·&nbsp; ↓划↑ = 昼/夜 &nbsp;·&nbsp; ↑划↓ = 加鱼</span>
+        <span>手势提示：长按 = 菜单 &nbsp;·&nbsp; 点击 = 投食(可连点多投) &nbsp;·&nbsp; 画圈 = 换水 &nbsp;·&nbsp; 画✅ = 开/关过滤 &nbsp;·&nbsp; ←划→ = 修剪 &nbsp;·&nbsp; →划← = 定格画面 &nbsp;·&nbsp; ↓划↑ = 昼/夜 &nbsp;·&nbsp; ↑划↓ = 加鱼</span>
       </div>
     </div>
   </div>
@@ -1315,10 +1327,8 @@ document.getElementById("btnAddFish").addEventListener("click", addAdultGoldfish
     const vh = viewport ? viewport.height : window.innerHeight;
     const availH = vh - padH;
     const availW = vw - padW;
-    const ratio = 4 / 5;
-    let w = Math.max(0, availW), h = w / ratio;
-    if (h > availH) { h = Math.max(0, availH); w = h * ratio; }
-    w *= 0.95; h *= 0.95;
+    let w = Math.max(0, availW) * 0.95;
+    let h = Math.max(0, availH) * 0.95;
     if (w < 60 || h < 60) return;
     stage.style.width = Math.floor(w) + "px";
     stage.style.height = Math.floor(h) + "px";
@@ -1351,6 +1361,8 @@ function flashGestureToast(text) {
   clearTimeout(gestureToastT);
   gestureToastT = setTimeout(() => gestureToast.classList.remove("show"), 1100);
 }
+
+let tankFrozen = false;
 
 /* —— 鱼缸手势识别：长按=菜单 / 点击=投食(多点多投) / 画圈=换水 / 画✅=开关过滤 / ←→划=修剪 / ↑划=昼夜 / ↓划=加鱼 —— */
 (function () {
@@ -1414,7 +1426,7 @@ function flashGestureToast(text) {
     const netDist = Math.hypot(dx, dy);
     const straightness = pathLen > 0 ? netDist / pathLen : 0;
     if (straightness > 0.75 && netDist > MIN_SWIPE) {
-      if (Math.abs(dx) > Math.abs(dy) * 1.5 && dx > 0) return "swipe-right";
+      if (Math.abs(dx) > Math.abs(dy) * 1.5) return dx > 0 ? "swipe-right" : "swipe-left";
       if (Math.abs(dy) > Math.abs(dx) * 1.5) return dy < 0 ? "swipe-up" : "swipe-down";
     }
     return null;
@@ -1422,6 +1434,7 @@ function flashGestureToast(text) {
 
   function onDown(e) {
     if (menuOverlay.classList.contains("show")) return;
+    tankFrozen = false;
     tracking = true;
     longPressFired = false;
     downPt = localPos(e);
@@ -1468,6 +1481,9 @@ function flashGestureToast(text) {
     } else if (g === "swipe-right") {
       trimPlants();
       flashGestureToast("🌿 已修剪水草");
+    } else if (g === "swipe-left") {
+      tankFrozen = true;
+      flashGestureToast("⏸ 画面已定格");
     } else if (g === "swipe-up") {
       isNight = !isNight; staticDirty = true; playBlip(isNight ? 300 : 700);
       flashGestureToast(isNight ? "🌙 夜晚模式" : "☀️ 白天模式");
@@ -1553,11 +1569,14 @@ let last = performance.now();
 const actors = [];
 function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
-  last = now; t += dt;
-  updateBubbles(dt); updateFood(dt); updateEggs(dt);
-  updatePlants(dt); updateEco(dt);
-  turtle.update(dt);
-  for (let i = 0; i < fishes.length; i++) fishes[i].update(dt);
+  last = now;
+  if (!tankFrozen) {
+    t += dt;
+    updateBubbles(dt); updateFood(dt); updateEggs(dt);
+    updatePlants(dt); updateEco(dt);
+    turtle.update(dt);
+    for (let i = 0; i < fishes.length; i++) fishes[i].update(dt);
+  }
   if (staticDirty) rebuildStaticLayer();
   ctx.clearRect(0, 0, W, H);
   drawWater();
